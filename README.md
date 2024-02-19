@@ -13,12 +13,12 @@ In this scenario, the end-user dials a phone number displayed to them and enters
 ### Request Parameters
 ```json
 {
-  action:'inbound', 
-  appId:'fs9f52d9dcc1f406b93d97ff1f43c554f',
-  token:'NGMxYWRlMGFkYTRjNGQ2ZWFiNTFmYjMz',
-  uid:'123',
-  channel:'pstn',
-  region:'AREA_CODE_NA',
+  "action":'inbound', 
+  "appId":'fs9f52d9dcc1f406b93d97ff1f43c554f',
+  "token":'NGMxYWRlMGFkYTRjNGQ2ZWFiNTFmYjMz',
+  "uid":'123',
+  "channel":'pstn',
+  "region":'AREA_CODE_NA',
 }
 ```
 - `appId` (string) the Agora project appId
