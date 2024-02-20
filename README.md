@@ -7,7 +7,7 @@ These REST APIs allow developers to trigger inbound and outbound PSTN calls whic
 ## Inbound PSTN
 In this scenario, the end-user dials a phone number displayed to them and enters the PIN when prompted. With the correct PIN, they are connected into the Agora channel.
 
-- **URL**: `/v1/api/pstn`
+- **URL**: `https://sipcm.agora.io/v1/api/pstn`
 - **Method**: `POST`
 
 ### Request Parameters
@@ -58,7 +58,7 @@ Direct Inward Dialing (DID) providers such as Twilio allow you to buy a phone nu
 ## Outbound PSTN
 In this scenario, the end-user receives a phone call which connects them directly to the channel when they answer. 
 
-- **URL**: `/v1/api/pstn`
+- **URL**: `https://sipcm.agora.io/v1/api/pstn`
 - **Method**: `POST`
 
 ### Request Parameters
