@@ -2,8 +2,8 @@
 
 
 ## Overview    
-These REST APIs allow developers to trigger inbound and outbound PSTN calls which then connect into an Agora channel enabling end-users to participate with their phone for the audio leg of the conference call.
-Please contact us to provision your appId on this service. We will then provide you with an authorization header to include in the API requests below.
+These REST APIs allow developers to trigger inbound and outbound PSTN calls which then connect into an Agora channel enabling end-users to participate with their phone for the audio leg of the conference call.     
+Please contact us to provision your appId with this service. We will provide you with an authorization header to include in the API requests below.
 
 ## Inbound PSTN
 In this scenario, the end-user dials a phone number displayed to them and enters the PIN when prompted. With the correct PIN, they are connected into the Agora channel.
