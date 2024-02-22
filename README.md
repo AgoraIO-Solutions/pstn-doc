@@ -3,7 +3,7 @@
 
 ## Overview    
 These REST APIs allow developers to trigger inbound and outbound PSTN calls which then connect into an Agora channel enabling end-users to participate with their phone for the audio leg of the conference call.     
-Please contact us to provision your appId with this service. We will provide you with an authorization header to include in the API requests below.
+Please contact us to provision your appid with this service. We will provide you with an authorization header to include in the API requests below.
 
 ## Inbound PSTN
 In this scenario, the end-user dials a phone number displayed to them and enters the PIN when prompted. With the correct PIN, they are connected into the Agora channel.
@@ -15,14 +15,14 @@ In this scenario, the end-user dials a phone number displayed to them and enters
 ```json
 {
   "action":"inbound", 
-  "appId":"fs9f52d9dcc1f406b93d97ff1f43c554f",
+  "appid":"fs9f52d9dcc1f406b93d97ff1f43c554f",
   "token":"NGMxYWRlMGFkYTRjNGQ2ZWFiNTFmYjMz",
   "uid":"123",
   "channel":"pstn",
   "region":"AREA_CODE_NA",
 }
 ```
-- `appId` (string) the Agora project appId
+- `appid` (string) the Agora project appid
 - `token` (string) [optional]: a generated access token
 - `uid` (string or int) [optional]: a user uid
 - `channel` (string): an Agora channel name
@@ -66,7 +66,7 @@ In this scenario, the end-user receives a phone call which connects them directl
 ```json
 {
   "action":"outbound", 
-  "appId":"fs9f52d9dcc1f406b93d97ff1f43c554f",
+  "appid":"fs9f52d9dcc1f406b93d97ff1f43c554f",
   "token":"NGMxYWRlMGFkYTRjNGQ2ZWFiNTFmYjMz",
   "uid":"123",
   "channel":"pstn",
@@ -76,7 +76,7 @@ In this scenario, the end-user receives a phone call which connects them directl
   "sip":{"provider":"twilio","username":"tw","password":"tw","uri":"twilio22.pstn.ashburn.twilio.com"}
 }
 ```
-- `appId` (string) the Agora project appId
+- `appid` (string) the Agora project appid
 - `token` (string) [optional]: a generated access token
 - `uid` (string or int) [optional]: a user uid
 - `channel` (string): an Agora channel name
