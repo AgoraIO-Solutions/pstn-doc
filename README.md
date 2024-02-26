@@ -52,6 +52,12 @@ Body:
 - `display` the phone number to dial in a more friendly display format
 - `pin` the pin to enter when prompted
 
+### Error Responses       
+401  Unauthorized      
+500  Missing Parameters
+503  No resource currently available      
+
+
 ### Notes
 Direct Inward Dialing (DID) providers such as Twilio allow you to buy a phone number and have the calls forwarded to a SIP address. We will provide you with the SIP address to forward your calls to when we provision you on this service. You will also be able to customise the voice prompts played to your end-users. 
 
@@ -103,5 +109,10 @@ Body:
     "tid": "8887755Asdd",
 }
 ```
-- `tid` a transaction id 
+- `tid` a transaction id
+
+### Error Responses       
+401  Unauthorized      
+500  Missing Parameters
+503  No resource currently available      
 
