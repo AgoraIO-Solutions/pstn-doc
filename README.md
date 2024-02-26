@@ -52,9 +52,9 @@ Body:
 - `display` the phone number to dial in a more friendly display format
 - `pin` the pin to enter when prompted
 
-### Error Responses       
+### Error Code Responses       
 401  Unauthorized      
-500  Missing Parameters
+500  Missing Parameters     
 503  No resource currently available      
 
 
@@ -111,8 +111,8 @@ Body:
 ```
 - `tid` a transaction id
 
-### Error Responses       
+### Error Code Responses       
 401  Unauthorized      
-500  Missing Parameters
+500  Missing Parameters       
 503  No resource currently available      
 
