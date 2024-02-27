@@ -41,7 +41,6 @@ In this scenario, the end-user dials a phone number displayed to them and enters
 Body:
 ```json
 {  
-    "status": 200,
     "did": "17377583411",
     "display": "+1 (737) 758 3411",
     "pin": "780592",
@@ -105,7 +104,6 @@ In this scenario, the end-user receives a phone call which connects them directl
 Body:
 ```json
 {  
-    "status": 200,
     "tid": "8887755Asdd",
 }
 ```
