@@ -76,8 +76,8 @@ In this scenario, the end-user receives a phone call which connects them directl
   "uid":"123",
   "channel":"pstn",
   "region":"AREA_CODE_NA",
-  "to":"+447712886400",
   "prompt":"true",
+  "to":"+447712886400",
   "from":"+1800222333",
   "sip":{"provider":"twilio","username":"tw","password":"tw","uri":"twilio22.pstn.ashburn.twilio.com"}
 }
@@ -86,9 +86,10 @@ In this scenario, the end-user receives a phone call which connects them directl
 - `token` (string) [optional]: a generated access token
 - `uid` (string or int) [optional]: a user uid
 - `channel` (string): an Agora channel name
+- `prompt` (string): play the callee a voice prompt and wait for them to press a digit
 - `to` (string): the end-user's phone number to dial
 - `from` (string): the calling number displayed on the end-user's phone during ringing
-- `sip` (string): the credentials needed to place the sip call via a supported provider.
+- `sip` (string): termination sip uri     
 - `region` (string): the user's region where they will likely be located and calling from. Values:
 
       AREA_CODE_NA: North America    
