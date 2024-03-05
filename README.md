@@ -84,7 +84,7 @@ In this scenario, the end-user receives a phone call which connects them directl
   "prompt":"true",
   "to":"+447712886400",
   "from":"+1800222333",
-  "sip":{"provider":"twilio","username":"tw","password":"tw","uri":"twilio22.pstn.ashburn.twilio.com"}
+  "sip":"acme.pstn.ashburn.twilio.com"
 }
 ```
 - `appid` (string) the Agora project appid
