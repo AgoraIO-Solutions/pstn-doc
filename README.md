@@ -171,6 +171,5 @@ Body:
 
 
 ### Notes
-Direct Inward Dialing (DID) providers such as Twilio allow you to buy a phone number and have the calls forwarded to a SIP address. We will provide you with the SIP address to forward your calls to when we provision you on this service. You will also be able to customise the voice prompts played to your end-users. 
-
+Using this API you can bridge an outbound call from your provider with an inbound sip address into Agora.
 
