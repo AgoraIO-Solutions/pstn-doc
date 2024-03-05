@@ -1,11 +1,15 @@
 # Agora PSTN 
 
 
-## Overview    
+1. [Overview](#overview)
+2. [Inbound](#inbound)
+3. [Outbound](#outbound)
+
+## Overview <a name="overview"></a>
 These REST APIs allow developers to trigger inbound and outbound PSTN calls which then connect into an Agora channel enabling end-users to participate with their phone for the audio leg of the conference call.     
 Please contact us to provision your appid with this service. We will provide you with an authorization header to include in the API requests below.
 
-## Inbound PSTN
+## Inbound PSTN <a name="inbound"></a>
 In this scenario, the end-user dials a phone number displayed to them and enters the PIN when prompted. With the correct PIN, they are connected into the Agora channel.
 
 - **URL**: `https://sipcm.agora.io/v1/api/pstn`
@@ -61,7 +65,7 @@ Body:
 Direct Inward Dialing (DID) providers such as Twilio allow you to buy a phone number and have the calls forwarded to a SIP address. We will provide you with the SIP address to forward your calls to when we provision you on this service. You will also be able to customise the voice prompts played to your end-users. 
 
 
-## Outbound PSTN
+## Outbound PSTN <a name="outbound"></a>
 In this scenario, the end-user receives a phone call which connects them directly to the channel when they answer. 
 
 - **URL**: `https://sipcm.agora.io/v1/api/pstn`
