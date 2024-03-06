@@ -91,10 +91,10 @@ In this scenario, the end-user receives a phone call which connects them directl
 - `token` (string) [optional]: a generated access token
 - `uid` (string or int) [optional]: a user uid
 - `channel` (string): an Agora channel name
-- `prompt` (string): play the callee a voice prompt and wait for them to press a digit
+- `prompt` (string): play the callee a voice prompt and wait for them to press a digit. If set to "lazy" then any DTMF may be pressed.
 - `to` (string): the end-user's phone number to dial
 - `from` (string): the calling number displayed on the end-user's phone during ringing
-- `sip` (string): termination sip uri     
+- `sip` (string): termination sip uri or leave blank if using shared pool    
 - `region` (string): the user's region where they will likely be located and calling from. Values:
 
       AREA_CODE_NA: North America    
