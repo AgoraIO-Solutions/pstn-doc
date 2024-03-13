@@ -5,7 +5,8 @@
 2. [Inbound PSTN](#inbound)
 3. [Outbound PSTN](#outbound)
 4. [Inbound SIP](#inboundsip)
-
+5. [Agora Gateway IPs](#gatewayips)
+ 
 ## Overview <a name="overview"></a>
 These REST APIs allow developers to trigger inbound and outbound PSTN calls which then connect into an Agora channel enabling end-users to participate with their phone for the audio leg of the conference call.     
 Please contact us to provision your appid with this service. We will provide you with an authorization header to include in the API requests below.
@@ -172,4 +173,12 @@ Body:
 
 ### Notes
 Using this API you can bridge an outbound call from your provider with an inbound sip address into Agora.
+
+## Agora Gateway IPs <a name="gatewayips"></a>       
+
+Please add the following Agora SIP Gatewway IPs to the relevent Access Control Lists for placing PSTN calls.      
+3.9.67.24    
+52.3.185.227     
+52.9.29.181     
+34.233.232.16       
 
