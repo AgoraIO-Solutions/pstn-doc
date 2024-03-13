@@ -185,8 +185,15 @@ Please add the following IP addresses to any Access Control Lists which restrict
 34.233.232.16       
 
 ### Inbound IPs      
-Please point inbound calls at one of these IPs      
+Please point inbound calls at one of these IPs with the other being a failover. 
 52.3.185.227     
 52.9.29.181     
+
+## Configure Twilio <a name="configtwilio"></a>       
+You can configure your Twilio own account to work with both the Inbound and Outbound calling APIs above.      
+
+[Twilio Inbound](https://drive.google.com/file/d/1HK0vTP9pEsYLFaCP884uLw075qVvbVuv/view?usp=sharing)      
+
+[Twilio Outbound](https://drive.google.com/file/d/18XvvCLDhPkhbTJB1YC1JCjP5z9ZTWx06/view?usp=sharing)      
 
 
