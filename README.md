@@ -176,7 +176,8 @@ Using this API you can bridge an outbound call from your provider with an inboun
 
 ## Agora Gateway IPs <a name="gatewayips"></a>       
 
-Please add the following Agora SIP Gatewway IPs to the relevent Access Control Lists for placing PSTN calls.      
+Please add the following IP addresses to any Access Control Lists which restrict calling by IP.
+
 3.9.67.24    
 52.3.185.227     
 52.9.29.181     
