@@ -176,10 +176,17 @@ Using this API you can bridge an outbound call from your provider with an inboun
 
 ## Agora Gateway IPs <a name="gatewayips"></a>       
 
-Please add the following IP addresses to any Access Control Lists which restrict calling by IP.
+### Outbound IPs      
+Please add the following IP addresses to any Access Control Lists which restrict outbound calling by IP.
 
 3.9.67.24    
 52.3.185.227     
 52.9.29.181     
 34.233.232.16       
+
+### Inbound IPs      
+Please point inbound calls at one of these IPs      
+52.3.185.227     
+52.9.29.181     
+
 
