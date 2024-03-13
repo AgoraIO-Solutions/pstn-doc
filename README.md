@@ -6,6 +6,7 @@
 3. [Outbound PSTN](#outbound)
 4. [Inbound SIP](#inboundsip)
 5. [Agora Gateway IPs](#gatewayips)
+6. [Twilio Configuration](#configtwilio)
  
 ## Overview <a name="overview"></a>
 These REST APIs allow developers to trigger inbound and outbound PSTN calls which then connect into an Agora channel enabling end-users to participate with their phone for the audio leg of the conference call.     
@@ -190,7 +191,7 @@ Please point inbound calls at one of these IPs with the other being a failover.
 52.9.29.181     
 
 ## Configure Twilio <a name="configtwilio"></a>       
-You can configure your Twilio own account to work with both the Inbound and Outbound calling APIs above.      
+Configure your own Twilio account to work with the Inbound and Outbound calling APIs above.      
 
 [Twilio Inbound](https://drive.google.com/file/d/1HK0vTP9pEsYLFaCP884uLw075qVvbVuv/view?usp=sharing)      
 
