@@ -178,7 +178,7 @@ Using this API you can bridge an outbound call from your provider with an inboun
 
 ## Static PIN <a name="staticpin"></a>
 If provisioned, the service can call out to an external REST endpoint providing the number dialed and pin entered.
-The REST endpoint can then return the details needed.
+The REST endpoint can choose to accept the PIN and return the details needed to join the user to the channel or error status 404 if PIN not valid.
 
 - **URL**: `https://example.customer.com/api/pinlookup`
 - **Method**: `POST`
