@@ -5,8 +5,9 @@
 2. [Inbound PSTN](#inbound)
 3. [Outbound PSTN](#outbound)
 4. [Inbound SIP](#inboundsip)
-5. [Agora Gateway IPs](#gatewayips)
-6. [Twilio Configuration](#configtwilio)
+5. [Static PIN](#staticpin)
+6. [Agora Gateway IPs](#gatewayips)
+7. [Twilio Configuration](#configtwilio)
  
 ## Overview <a name="overview"></a>
 These REST APIs allow developers to trigger inbound and outbound PSTN calls which then connect into an Agora channel enabling end-users to participate with their phone for the audio leg of the conference call.     
@@ -18,7 +19,7 @@ In this scenario, the end-user dials a phone number displayed to them and enters
 - **URL**: `https://sipcm.agora.io/v1/api/pstn`
 - **Method**: `POST`
 
-### Request Parameters
+### Request Body Parameters as JSON
 ```json
 {
   "action":"inbound", 
@@ -74,7 +75,7 @@ In this scenario, the end-user receives a phone call which connects them directl
 - **URL**: `https://sipcm.agora.io/v1/api/pstn`
 - **Method**: `POST`
 
-### Request Parameters
+### Request Body Parameters as JSON
 ```json
 {
   "action":"outbound", 
@@ -130,7 +131,7 @@ In this scenario, an inbound SIP address is requested. When the SIP address is d
 - **URL**: `https://sipcm.agora.io/v1/api/pstn`
 - **Method**: `POST`
 
-### Request Parameters
+### Request Body Parameters as JSON
 ```json
 {
   "action":"inboundsip", 
@@ -174,6 +175,47 @@ Body:
 
 ### Notes
 Using this API you can bridge an outbound call from your provider with an inbound sip address into Agora.
+
+## Static PIN <a name="staticpin"></a>
+If provisioned, the service can call out to an external REST endpoint providing the number dialed and pin entered.
+The REST endpoint can then return the details needed.
+
+- **URL**: `https://example.customer.com/api/pinlookup`
+- **Method**: `POST`
+
+### Request Body Parameters as JSON
+```json
+{
+  "did":"17177440111", 
+  "pin":"334455",
+}
+```
+- `did` the phone number dialed
+- `pin` the pin entered
+
+### Success Response Example
+*Status Code*: `200 OK`    
+*Content Type*: `application/json`    
+Body:
+```json
+{  
+  "token":"NGMxYWRlMGFkYTRjNGQ2ZWFiNTFmYjMz",
+  "uid":"123",
+  "channel":"test",
+  "appid":"fs9f52d9dcc1f406b93d97ff1f43c554f",
+}
+```    
+
+- `token` (string): a generated access token OR the appid if tokens are not enabled
+- `uid` (string or int): a user uid
+- `channel` (string): an Agora channel name
+- `appid` (string): the Agora appid for your project
+
+### Error Code Responses       
+404  Not Found  
+
+### Notes
+This API allows you to give your users a pin that will not expire. 
 
 ## Agora Gateway IPs <a name="gatewayips"></a>       
 
