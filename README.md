@@ -1,4 +1,4 @@
-# Agora PSTN 
+# Agora PSTN & SIP Gateway
 
 
 1. [Overview](#overview)
