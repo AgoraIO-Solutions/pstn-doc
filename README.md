@@ -115,17 +115,25 @@ In this scenario, the end-user receives a phone call which connects them directl
 *Content Type*: `application/json`    
 Body:
 ```json
-{  
-    "tid": "8887755Asdd",
+{
+    "success": true,
+    "callid": "88877-55Asdd7-55Asdd",
+    "reason": "busy",
+
 }
 ```
-- `tid` a transaction id
+- `success` If 'true' the call has connected and 'callid' will be included in the response 
+            If 'false' the call has failed and 'reason' will be included in the response   
+- `callid` [optional] This can be used to end the call        
+- `reason` [optional] The call failed because the user was 'busy' or the destination was 'invalid'           
 
 ### Error Code Responses       
 401  Unauthorized      
 500  Missing Parameters       
 503  No resource currently available      
 
+### Notes     
+If this API returns success 'true' the call has been connected. If it returns success false there will be a reason 
 
 ## Inbound SIP <a name="inboundsip"></a>
 In this scenario, an inbound SIP address is requested. When the SIP address is dialled, the call will be routed to the requested user/channel session.
@@ -217,7 +225,41 @@ Body:
 404  Not Found  
 
 ### Notes
-This API allows you to give your users a pin that will not expire. 
+This API allows you to give your users a pin that will not expire.
+
+## End Call <a name="endcall"></a>
+With the callid returned by the outbound call API, you can terminate an outbound call.    
+
+- **URL**: `https://sipcm.agora.io/v1/api/pstn`
+- **Method**: `POST`
+
+### Request Body Parameters as JSON
+```json
+{
+  "action":"endcall",
+  "appid":"fs9f52d9dcc1f406b93d97ff1f43c554f",
+  "callid":"f577605c-eb3a-4efe-af1b-ee66d5297569",
+}
+```
+- `appid` (string) the Agora project appid
+- `callid` (string) the call id of the ongoing call    
+
+### Success Response Example
+*Status Code*: `200 OK`    
+*Content Type*: `application/json`    
+Body:
+```json
+{  
+  "success":true
+}
+```    
+
+### Error Code Responses       
+404  Not Found  
+
+### Notes
+This API allows you to stop an outbound call. 
+
 
 ## Agora Gateway IPs <a name="gatewayips"></a>       
 
