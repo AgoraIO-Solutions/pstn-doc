@@ -11,7 +11,7 @@
 8. [Twilio Configuration](#configtwilio)
  
 ## Overview <a name="overview"></a>
-These REST APIs allow developers to trigger inbound and outbound PSTN calls which then connect into an Agora channel enabling end-users to participate with their phone for the audio leg of the conference call.     
+These REST APIs allow developers to trigger inbound and outbound PSTN and SIP calls which then connect into an Agora channel enabling end-users to participate with their phone for the audio leg of the conference call.     
 Please contact us to provision your appid with this service. We will provide you with an authorization header to include in the API requests below.
 
 ## Inbound PSTN <a name="inbound"></a>
