@@ -123,8 +123,7 @@ Body:
 
 }
 ```
-- `success` If 'true' the call has connected and 'callid' will be included in the response 
-            If 'false' the call has failed and 'reason' will be included in the response   
+- `success` If 'true' the call has connected and 'callid' will be included in the response. If 'false' the call has failed and 'reason' will be included in the response     
 - `callid` [optional] This can be used to end the call        
 - `reason` [optional] The call failed because the user was 'busy' or the destination was 'invalid'           
 
