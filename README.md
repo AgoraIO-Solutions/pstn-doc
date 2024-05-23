@@ -229,7 +229,7 @@ Body:
 This API allows you to give your users a pin that will not expire.
 
 ## End Call <a name="endcall"></a>
-With the callid returned by the outbound call API, you can terminate an outbound call.    
+Use the callid returned by the outbound call API to terminate an outbound call.    
 
 - **URL**: `https://sipcm.agora.io/v1/api/pstn`
 - **Method**: `POST`
