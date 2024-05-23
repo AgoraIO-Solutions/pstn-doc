@@ -6,8 +6,9 @@
 3. [Outbound PSTN](#outbound)
 4. [Inbound SIP](#inboundsip)
 5. [Static PIN](#staticpin)
-6. [Agora Gateway IPs](#gatewayips)
-7. [Twilio Configuration](#configtwilio)
+6. [End Call](#endcall)
+7. [Agora Gateway IPs](#gatewayips)
+8. [Twilio Configuration](#configtwilio)
  
 ## Overview <a name="overview"></a>
 These REST APIs allow developers to trigger inbound and outbound PSTN calls which then connect into an Agora channel enabling end-users to participate with their phone for the audio leg of the conference call.     
