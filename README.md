@@ -99,7 +99,7 @@ In this scenario, the end-user receives a phone call which connects them directl
 - `prompt` (string): play the callee a voice prompt and wait for them to press a digit. If set to "lazy" then any DTMF may be pressed.
 - `to` (string): the end-user's phone number to dial. You can optionally add a # followed by numbers which will be played as DTMF once the call connects.      
 - `from` (string): the calling number displayed on the end-user's phone during ringing
-- `sip` (string): termination sip uri or leave blank if using shared pool
+- `sip` (string): termination sip uri or leave blank if being routed by this service   
 - `timeout` (string) [optional]: max duration for outbound call in seconds. Default 3600 seconds which is 1 hour.   
 - `region` (string): the user's region where they will likely be located and calling from. Values:
 
