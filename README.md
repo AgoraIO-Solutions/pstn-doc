@@ -25,14 +25,14 @@ In this scenario, the end-user dials a phone number displayed to them and enters
 {
   "action":"inbound", 
   "appid":"fs9f52d9dcc1f406b93d97ff1f43c554f",
-  "token":"NGMxYWRlMGFkYTRjNGQ2ZWFiNTFmYjMz",
+  "token":"006d2776fef40dc864dc7a438e3b871IACGnkorQsr0iCpBmzNwKEdzKuAv1b1zRcMy0cOradw6mHN/il8AAAAAIgCQqbAFeaVzZgQAAQDw0oBmAgDw0oBmAwDw0oBmBADw0oBm",
   "uid":"123",
   "channel":"pstn",
   "region":"AREA_CODE_NA",
 }
 ```
 - `appid` (string) the Agora project appid
-- `token` (string) [optional]: a generated access token
+- `token` (string) [optional]: a generated Agora RTC access token
 - `uid` (string or int) [optional]: a user uid
 - `channel` (string): an Agora channel name
 - `region` (string): the user's region where they will likely be located and calling from. Values:
@@ -81,7 +81,7 @@ In this scenario, the end-user receives a phone call which connects them directl
 {
   "action":"outbound", 
   "appid":"fs9f52d9dcc1f406b93d97ff1f43c554f",
-  "token":"NGMxYWRlMGFkYTRjNGQ2ZWFiNTFmYjMz",
+  "token":"006d2776fef40dc864dc7a438e3b871IACGnkorQsr0iCpBmzNwKEdzKuAv1b1zRcMy0cOradw6mHN/il8AAAAAIgCQqbAFeaVzZgQAAQDw0oBmAgDw0oBmAwDw0oBmBADw0oBm",
   "uid":"123",
   "channel":"pstn",
   "region":"AREA_CODE_NA",
@@ -146,7 +146,7 @@ In this scenario, an inbound SIP address is requested. When the SIP address is d
 {
   "action":"inboundsip", 
   "appid":"fs9f52d9dcc1f406b93d97ff1f43c554f",
-  "token":"NGMxYWRlMGFkYTRjNGQ2ZWFiNTFmYjMz",
+  "token":"006d2776fef40dc864dc7a438e3b871IACGnkorQsr0iCpBmzNwKEdzKuAv1b1zRcMy0cOradw6mHN/il8AAAAAIgCQqbAFeaVzZgQAAQDw0oBmAgDw0oBmAwDw0oBmBADw0oBm",
   "uid":"123",
   "channel":"test",
   "region":"AREA_CODE_NA",
@@ -209,7 +209,7 @@ The REST endpoint can choose to accept the PIN and return the details needed to 
 Body:
 ```json
 {  
-  "token":"NGMxYWRlMGFkYTRjNGQ2ZWFiNTFmYjMz",
+  "token":"006d2776fef40dc864dc7a438e3b871IACGnkorQsr0iCpBmzNwKEdzKuAv1b1zRcMy0cOradw6mHN/il8AAAAAIgCQqbAFeaVzZgQAAQDw0oBmAgDw0oBmAwDw0oBmBADw0oBm",
   "uid":"123",
   "channel":"test",
   "appid":"fs9f52d9dcc1f406b93d97ff1f43c554f",
