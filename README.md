@@ -262,7 +262,7 @@ Body:
 This API allows you to stop an outbound call. 
 
 ## Cancel Call <a name="cancelcall"></a>
-Pass the details returned by an inbound call request to cancel it. If the call is in progress it will be stopped.   
+Pass the details returned by an Inbound PSTN or Inbound SIP API call request to cancel it. If the call is in progress it will be stopped.   
 
 - **URL**: `https://sipcm.agora.io/v1/api/pstn`
 - **Method**: `POST`
