@@ -172,7 +172,7 @@ In this scenario, an inbound SIP address is requested. When the SIP address is d
 Body:
 ```json
 {  
-    "sip": "sip:lookup_783410988998@2.4.6.7:5080",
+    "sip": "sip:pstn_783410988998@2.4.6.7:5080",
 }
 ```    
 
@@ -272,7 +272,7 @@ Pass the details returned by an Inbound PSTN or Inbound SIP API call request to 
 {
   "action":"cancelcall",
   "appid":"fs9f52d9dcc1f406b93d97ff1f43c554f",
-  "sip":"sip:lookup_783410988998@2.4.6.7:5080",      
+  "sip":"sip:pstn_783410988998@2.4.6.7:5080",      
   "did":"17377583411",
   "pin":"445566",
 }
