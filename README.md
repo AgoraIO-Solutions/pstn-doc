@@ -7,8 +7,9 @@
 4. [Inbound SIP](#inboundsip)
 5. [Static PIN](#staticpin)
 6. [End Call](#endcall)
-7. [Agora Gateway IPs](#gatewayips)
-8. [Twilio Configuration](#configtwilio)
+7. [Cancel Call](#cancelcall)
+8. [Agora Gateway IPs](#gatewayips)
+9. [Twilio Configuration](#configtwilio)
  
 ## Overview <a name="overview"></a>
 These REST APIs allow developers to trigger inbound and outbound PSTN and SIP calls which then connect into an Agora channel enabling end-users to participate with their phone for the audio leg of the conference call.     
@@ -260,6 +261,42 @@ Body:
 ### Notes
 This API allows you to stop an outbound call. 
 
+## Cancel Call <a name="cancelcall"></a>
+Pass the details returned by an inbound call request to cancel it. If the call is in progress it will be stopped.   
+
+- **URL**: `https://sipcm.agora.io/v1/api/pstn`
+- **Method**: `POST`
+
+### Request Body Parameters as JSON
+```json
+{
+  "action":"cancelcall",
+  "appid":"fs9f52d9dcc1f406b93d97ff1f43c554f",
+  "sip":"sip:lookup_783410988998@2.4.6.7:5080",      
+  "did":"17377583411",
+  "pin":"445566",
+}
+```
+- `appid` (string) the Agora project appid    
+- `sip` (string) [optional] the sip address returned by inboundsip api     
+- `did` (string) [optional] the did returned by inbound api
+- `pin` (string) [optional] the pin returned by inbound api     
+
+### Success Response Example
+*Status Code*: `200 OK`    
+*Content Type*: `application/json`    
+Body:
+```json
+{  
+  "success":true
+}
+```    
+
+### Error Code Responses       
+404  Not Found  
+
+### Notes
+This API allows you to cancel a previous call setup request. 
 
 ## Agora Gateway IPs <a name="gatewayips"></a>       
 
