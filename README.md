@@ -292,7 +292,7 @@ Cancel a call setup request created by Inbound PSTN or Inbound SIP API calls. If
 - **URL**: `https://sipcm.agora.io/v1/api/pstn`
 - **Method**: `POST`
 
-### Method 1: Cancel by Bundle (Recommended)
+### Method 1: Cancel by Bundle
 Use the same parameters you used when creating the inbound or inboundsip request:
 
 ```json
@@ -351,7 +351,7 @@ Body:
 404  Not Found  
 
 ### Notes
-This API allows you to cancel a previous call setup request using any of the three methods above. Method 1 (by bundle) is recommended as it uses the same parameters you already have from your original API request, making it easier to track and cancel calls programmatically. You can cancel calls both before and after they connect - if the call is already in progress, it will be terminated.
+This API allows you to cancel a previous call setup request using any of the three methods above. You can cancel calls both before and after they connect - if the call is already in progress, it will be terminated.
 
 ## Agora Gateway IPs <a name="gatewayips"></a>       
 
