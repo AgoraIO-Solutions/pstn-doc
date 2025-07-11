@@ -287,7 +287,7 @@ Body:
 This API allows you to stop an outbound call that is currently in progress.
 
 ## Cancel Call <a name="cancelcall"></a>
-Cancel a call setup request created by Inbound PSTN or Inbound SIP API calls. If the call is already in progress, it will be stopped. You can use one of three methods to cancel a call:   
+Cancel a call setup request created by Inbound PSTN, Inbound SIP API or Static PIN webhook request. If the call is already in progress, it will be stopped. You can use one of three methods to cancel a call:   
 
 - **URL**: `https://sipcm.agora.io/v1/api/pstn`
 - **Method**: `POST`
