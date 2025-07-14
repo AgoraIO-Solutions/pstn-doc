@@ -305,9 +305,9 @@ Use the same parameters you used when creating the inbound or inboundsip request
 }
 ```
 - `appid` (string): the Agora project appid    
-- `token` (string): the token used in the original inbound/inboundsip request     
-- `uid` (string) [optional]: the uid used in the original inbound/inboundsip request
-- `channel` (string): the channel used in the original inbound/inboundsip request     
+- `token` (string): the token used to join the channel   
+- `uid` (string) [optional]: the uid used to join the channel   
+- `channel` (string): the channel used for the call
 
 ### Method 2: Cancel by SIP Address
 Use the sip address returned by the inboundsip API:
