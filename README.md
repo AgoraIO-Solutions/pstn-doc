@@ -358,18 +358,29 @@ This API allows you to cancel a previous call setup request using any of the thr
 ### Outbound IPs      
 Please add the following IP addresses to any Access Control Lists which restrict outbound calling by IP.
 
-3.9.67.24    
+13.41.31.20       
+3.9.67.24           
 52.3.185.227     
 52.9.29.181     
 34.233.232.16       
 
 ### Inbound IPs      
 Please point inbound calls at one of these IPs with the other being a failover.     
-52.3.185.227       
+
+#### US-East      
+52.3.185.227   
+
+#### US-West       
 52.9.29.181       
 
+#### EU-London
+13.41.31.20       
+3.9.67.24          
+
 ### Inbound SIP Port     
-5080     
+5080
+#### TLS
+5081
 
 ## Configure Twilio <a name="configtwilio"></a>       
 Configure your own Twilio account to work with the Inbound and Outbound calling APIs above.      
