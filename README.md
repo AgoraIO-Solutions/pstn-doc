@@ -365,7 +365,7 @@ Please add the following IP addresses to any Access Control Lists which restrict
 34.233.232.16       
 
 ### Inbound IPs      
-Please point inbound calls at one of these IPs with the other being a failover.     
+Please point inbound calls at one of these IPs with the other in same continent as failover.     
 
 #### US-East      
 52.3.185.227   
