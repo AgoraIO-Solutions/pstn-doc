@@ -8,8 +8,9 @@
 5. [Static PIN](#staticpin)
 6. [End Call](#endcall)
 7. [Cancel Call](#cancelcall)
-8. [Agora Gateway IPs](#gatewayips)
-9. [Twilio Configuration](#configtwilio)
+8. [SIP Entrypoints](#sipentry)
+9. [Agora Gateway IPs](#gatewayips)  
+10. [Twilio Configuration](#configtwilio)
  
 ## Overview <a name="overview"></a>
 These REST APIs allow developers to trigger inbound and outbound PSTN and SIP calls which then connect into an Agora channel enabling end-users to participate with their phone for the audio leg of the conference call.     
@@ -353,34 +354,51 @@ Body:
 ### Notes
 This API allows you to cancel a previous call setup request using any of the three methods above. You can cancel calls both before and after they connect - if the call is already in progress, it will be terminated.
 
+## SIP Entrypoints <a name="sipentry"></a>       
+
+### Europe
+**Region**: Europe   
+**Transport**: UDP, TCP  
+     `sip.eu.lb.01.agora.io:5080`   
+**Transport**: TLS  
+     `sip.eu.lb.01.agora.io:5081;transport=tls`   
+
+### USA
+**Region**: USA   
+**Transport**: UDP, TCP  
+     `sip.usa.lb.01.agora.io:5080`    
+**Transport**: TLS   
+     `sip.usa.lb.01.agora.io:5081;transport=tls`    
+
+### Asia (excluding China)
+**Region**: Asia    
+**Transport**: UDP, TCP    
+     `sip.as.lb.01.agora.io:5080`    
+**Transport**: TLS  
+     `sip.as.lb.01.agora.io:5081;transport=tls`    
+
+**Media Encryption**: SRTP (SDES) Optional      
+**Recommended**: TLS transport for secure signaling       
+
 ## Agora Gateway IPs <a name="gatewayips"></a>       
 
 ### Outbound IPs      
-Please add the following IP addresses to any Access Control Lists which restrict outbound calling by IP.
+Please add the following Agora SIP Gateway IP addresses to any Access Control Lists which restrict access by IP.
 
 13.41.31.20       
 3.9.67.24           
 52.3.185.227     
 52.9.29.181     
 34.233.232.16       
+3.142.129.19
+52.15.168.71
+3.150.139.106
+3.18.93.182
+13.40.252.243
+13.41.139.134
+13.204.36.207
+43.204.1.53
 
-### Inbound IPs      
-Please point inbound calls at one of these IPs with the other in same continent as failover.     
-
-#### US-East      
-52.3.185.227   
-
-#### US-West       
-52.9.29.181       
-
-#### EU-London
-13.41.31.20       
-3.9.67.24          
-
-### Inbound SIP Port     
-5080
-#### TLS
-5081
 
 ## Configure Twilio <a name="configtwilio"></a>       
 Configure your own Twilio account to work with the Inbound and Outbound calling APIs above.      
