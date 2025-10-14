@@ -382,8 +382,7 @@ This API allows you to cancel a previous call setup request using any of the thr
 
 ## Agora Gateway IPs <a name="gatewayips"></a>       
 
-### Outbound IPs      
-Please add the following Agora SIP Gateway IP addresses to any Access Control Lists which restrict access by IP.
+Please add the following IP addresses to any Access Control Lists which restrict outbound calls from Agora's SIP Gateway by IP addresses.
 
 13.41.31.20       
 3.9.67.24           
