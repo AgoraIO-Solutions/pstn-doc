@@ -370,7 +370,7 @@ This API allows you to cancel a previous call setup request using any of the thr
 **Transport**: TLS   
      `sip.usa.lb.01.agora.io:5081;transport=tls`    
 
-### Asia (excluding China)
+### Asia 
 **Region**: Asia    
 **Transport**: UDP, TCP    
      `sip.as.lb.01.agora.io:5080`    
@@ -390,15 +390,15 @@ Please add the following Agora SIP Gateway IP addresses to any Access Control Li
 52.3.185.227     
 52.9.29.181     
 34.233.232.16       
-3.142.129.19
-52.15.168.71
-3.150.139.106
-3.18.93.182
-13.40.252.243
-13.41.139.134
-13.204.36.207
-43.204.1.53
-
+3.142.129.19     
+52.15.168.71      
+3.150.139.106       
+3.18.93.182       
+13.40.252.243      
+13.41.139.134      
+13.204.36.207      
+43.204.1.53        
+ 
 
 ## Configure Twilio <a name="configtwilio"></a>       
 Configure your own Twilio account to work with the Inbound and Outbound calling APIs above.      
