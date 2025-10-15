@@ -237,6 +237,7 @@ If provisioned, the service can call out to an external REST endpoint (that you 
 ```
 - `did`: the phone number dialed
 - `pin`: the pin entered
+- `callerid`: the phone number of caller     
 
 ### Success Response Example (from your endpoint)
 *Status Code*: `200 OK`
