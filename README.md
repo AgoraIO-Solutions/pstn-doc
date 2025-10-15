@@ -114,7 +114,11 @@ In this scenario, the end-user receives a phone call which connects them directl
 - `token` (string) [optional]: a generated access token
 - `uid` (string) [optional]: a user uid
 - `channel` (string): an Agora channel name
-- `prompt` (string): play the callee a voice prompt and wait for them to press a digit. If set to "lazy" then any DTMF may be pressed
+- `prompt` (string): controls the connection behavior when the callee answers. Values:
+  - "false": Silent direct connect - No prompt, no beep, connects immediately to Agora
+  - "beep": Beep then connect - Plays beep sound, then connects to Agora (no prompt)
+  - "lazy": Lenient prompt - Plays voice prompt, accepts any DTMF digit to proceed (with beep)
+  - "true": Strict PIN mode - Plays voice prompt, requires pressing "1" to proceed (with beep). Any other digit plays goodbye message and hangs up
 - `to` (string): the end-user's phone number to dial. You can optionally add a # followed by numbers which will be played as DTMF once the call connects      
 - `from` (string): the calling number displayed on the end-user's phone during ringing
 - `sip` (string) [optional]: termination sip uri or leave blank if being routed by this service   
