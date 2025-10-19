@@ -5,7 +5,7 @@
 2. [Inbound PSTN](#inbound)
 3. [Outbound PSTN](#outbound)
 4. [Inbound SIP](#inboundsip)
-5. [Static PIN](#staticpin)
+5. [Inbound Call Lookup](#calllookup)
 6. [End Call](#endcall)
 7. [Cancel Call](#cancelcall)
 8. [Webhook Events](#webhooks)
@@ -109,7 +109,8 @@ In this scenario, the end-user receives a phone call which connects them directl
   "from":"+1800222333",
   "timeout":"3600",
   "sip":"acme.pstn.ashburn.twilio.com",
-  "webhook_url":"https://example.com/webhooks/call-events"
+  "webhook_url":"https://example.com/webhooks/call-events",
+  "sdk_options":"{\"rtc.client_type\":\"71\"}"
 }
 ```
 - `appid` (string): the Agora project appid
@@ -126,6 +127,7 @@ In this scenario, the end-user receives a phone call which connects them directl
 - `sip` (string) [optional]: termination sip uri or leave blank if being routed by this service
 - `timeout` (string) [optional]: max duration for outbound call in seconds. Default 3600 seconds which is 1 hour
 - `webhook_url` (string) [optional]: your webhook endpoint to receive call lifecycle events (see [Webhook Events](#webhooks))
+- `sdk_options` (string) [optional]: JSON string of Agora SDK options (e.g., `{"rtc.client_type":"71"}`)
 - `region` (string): the user's region where they will likely be located and calling from. Values:
 
       AREA_CODE_NA: North America    
@@ -219,8 +221,9 @@ Body:
 ### Notes
 Using this API you can bridge an outbound call from your provider with an inbound sip address into Agora.
 
-## Static PIN <a name="staticpin"></a>
-If provisioned, the service can call out to an external REST endpoint (that you implement) providing the number dialed and pin entered. Your REST endpoint can choose to accept the PIN and return the details needed to join the user to the channel or return error status 404 if PIN is not valid.
+## Inbound Call Lookup <a name="calllookup"></a>
+
+When provisioned, the gateway calls your REST endpoint when an inbound call arrives, providing the DID dialed, PIN entered (if configured), and caller ID. Your endpoint returns the Agora channel details to connect the caller to.
 
 **This is a webhook that YOU implement, not an Agora API endpoint.**
 
@@ -230,14 +233,14 @@ If provisioned, the service can call out to an external REST endpoint (that you 
 ### Request Body Parameters as JSON (sent by Agora to your endpoint)
 ```json
 {
-  "did":"17177440111", 
+  "did":"17177440111",
   "pin":"334455",
-  "callerid":1765740333"
+  "callerid":"1765740333"
 }
 ```
 - `did`: the phone number dialed
-- `pin`: the pin entered
-- `callerid`: the phone number of caller     
+- `pin`: the pin entered by caller (empty string if DID not configured for PIN prompts)
+- `callerid`: the phone number of caller
 
 ### Success Response Example (from your endpoint)
 *Status Code*: `200 OK`
@@ -249,7 +252,8 @@ Body:
   "uid":"123",
   "channel":"agora_channel",
   "appid":"your_appid_here",
-  "webhook_url":"https://example.com/webhooks/call-events"
+  "webhook_url":"https://example.com/webhooks/call-events",
+  "sdk_options":"{\"rtc.client_type\":\"71\"}"
 }
 ```
 
@@ -258,12 +262,13 @@ Body:
 - `channel` (string): an Agora channel name
 - `appid` (string) [optional]: the Agora appid for your project
 - `webhook_url` (string) [optional]: your webhook endpoint to receive call lifecycle events (see [Webhook Events](#webhooks))
+- `sdk_options` (string) [optional]: JSON string of Agora SDK options (e.g., `{"rtc.client_type":"71"}`)
 
-### Error Code Responses       
-404  Not Found  
+### Error Code Responses
+404  Not Found
 
 ### Notes
-This webhook allows you to give your users a PIN that will not expire. When users dial your DID and enter a PIN, Agora will call your endpoint to validate the PIN and get the channel details.
+This webhook allows dynamic call routing to Agora channels. Your DID can be configured to prompt for PIN entry or route directly based on DID/caller ID. Return 404 to reject the call.
 
 ## End Call <a name="endcall"></a>
 Use the callid returned by the outbound call API to terminate an outbound call.    
@@ -375,101 +380,95 @@ All webhook events include these base fields:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `event` | string | Event type (e.g., `call_started`, `call_hangup`) |
+| `event` | string | Event type identifier (e.g., "call_initiated", "call_hangup") |
 | `callid` | string | FreeSWITCH UUID for this call session |
-| `timestamp` | integer | Unix timestamp when event occurred |
+| `timestamp` | integer | Unix timestamp when event was generated |
 | `uid` | string | Agora user ID (may be empty for early events) |
 | `channel` | string | Agora channel ID (may be empty for early events) |
 | `to` | string | Destination phone number (with + prefix) |
 | `from` | string | Caller ID / origination number (with + prefix) |
-| `direction` | string | `inbound`, `outbound`, or `outbound_sip` |
+| `direction` | string | Call direction: "inbound", "outbound", or "outbound_sip" |
 | `appid` | string | Agora App ID (may be empty if not provided) |
 
 ### Outbound Call Event Sequence
 
-**Successful call flow**: `call_initiated` → `call_started` → `call_answered` → `agora_bridge_start` → `agora_bridge_end` → `call_hangup`
+**Successful call flow**: `call_initiated` → `call_ringing` → `call_answered` → `agora_bridge_start` → `agora_bridge_end` → `call_hangup`
 
 #### 1. call_initiated
 
-Sent when the API receives the call request (Node.js layer). This is the earliest event.
+Sent when the API receives the call request (Node.js layer). `callid` is empty at this point.
 
 ```json
 {
   "event": "call_initiated",
-  "callid": "3636eaab-7dfe-4030-8b06-a7d0ff464360",
+  "callid": "",
   "timestamp": 1736953200,
   "uid": "43455",
-  "channel": "my_channel",
-  "to": "+14155551234",
-  "from": "+14155554444",
+  "channel": "agora_iok2rg",
+  "to": "+447712886300",
+  "from": "+441473943851",
   "direction": "outbound",
-  "appid": "abc123"
+  "appid": "abc123def456"
 }
 ```
 
-#### 2. call_started
+#### 2. call_ringing
 
-Sent when the Lua script begins execution (FreeSWITCH layer).
+Sent 1 second after call_initiated if call hasn't completed yet. `callid` is still empty.
 
 ```json
 {
-  "event": "call_started",
-  "callid": "3636eaab-7dfe-4030-8b06-a7d0ff464360",
-  "timestamp": 1736953200,
+  "event": "call_ringing",
+  "callid": "",
+  "timestamp": 1736953201,
   "uid": "43455",
-  "channel": "my_channel",
-  "to": "+14155551234",
-  "from": "+14155554444",
+  "channel": "agora_iok2rg",
+  "to": "+447712886300",
+  "from": "+441473943851",
   "direction": "outbound",
-  "appid": "abc123"
+  "appid": "abc123def456"
 }
 ```
 
 #### 3. call_answered
 
-Sent when the PSTN call is confirmed answered.
+Sent when the PSTN call is answered. First event with actual `callid`.
 
 ```json
 {
   "event": "call_answered",
   "callid": "3636eaab-7dfe-4030-8b06-a7d0ff464360",
-  "timestamp": 1736953201,
+  "timestamp": 1736953205,
   "uid": "43455",
-  "channel": "my_channel",
-  "to": "+14155551234",
-  "from": "+14155554444",
+  "channel": "agora_iok2rg",
+  "to": "+447712886300",
+  "from": "+441473943851",
   "direction": "outbound",
-  "sip_domain": "sip.gateway.example.com:5080",
-  "appid": "abc123"
+  "appid": "abc123def456"
 }
 ```
 
-**Additional field**: `sip_domain` - SIP server that handled the call
-
 #### 4. agora_bridge_start
 
-Sent when audio bridge to Agora RTC is established. May be delayed if user needs to press "1" to accept.
+Sent when audio bridge to Agora RTC is established.
 
 ```json
 {
   "event": "agora_bridge_start",
   "callid": "3636eaab-7dfe-4030-8b06-a7d0ff464360",
-  "timestamp": 1736953205,
+  "timestamp": 1736953210,
   "uid": "43455",
-  "channel": "my_channel",
-  "to": "+14155551234",
-  "from": "+14155554444",
+  "channel": "agora_iok2rg",
+  "to": "+447712886300",
+  "from": "+441473943851",
   "direction": "outbound",
-  "token": "007eJxT...AgBm4=",
-  "appid": "abc123"
+  "appid": "abc123def456"
 }
 ```
 
-**Additional field**: `token` - Agora RTC token used
-
 #### 5. agora_bridge_end
 
-Sent when Agora RTC session ends normally. May not fire if call is abruptly terminated.
+Sent when Agora RTC session ends normally.
 
 ```json
 {
@@ -477,18 +476,17 @@ Sent when Agora RTC session ends normally. May not fire if call is abruptly term
   "callid": "3636eaab-7dfe-4030-8b06-a7d0ff464360",
   "timestamp": 1736953275,
   "uid": "43455",
-  "channel": "my_channel",
-  "to": "+14155551234",
-  "from": "+14155554444",
+  "channel": "agora_iok2rg",
+  "to": "+447712886300",
+  "from": "+441473943851",
   "direction": "outbound",
-  "token": "007eJxT...AgBm4=",
-  "appid": "abc123"
+  "appid": "abc123def456"
 }
 ```
 
 #### 6. call_hangup
 
-**GUARANTEED to fire** when call ends for any reason. This event uses a hangup handler hook.
+**GUARANTEED to fire** when call ends for any reason.
 
 ```json
 {
@@ -496,15 +494,15 @@ Sent when Agora RTC session ends normally. May not fire if call is abruptly term
   "callid": "3636eaab-7dfe-4030-8b06-a7d0ff464360",
   "timestamp": 1736953276,
   "uid": "43455",
-  "channel": "my_channel",
-  "to": "+14155551234",
-  "from": "+14155554444",
+  "channel": "agora_iok2rg",
+  "to": "+447712886300",
+  "from": "+441473943851",
   "direction": "outbound",
   "hangup_cause": "NORMAL_CLEARING",
   "duration": "75",
   "billsec": "70",
   "sip_disposition": "recv_bye",
-  "appid": "abc123"
+  "appid": "abc123def456"
 }
 ```
 
@@ -516,50 +514,32 @@ Sent when Agora RTC session ends normally. May not fire if call is abruptly term
 
 ### Inbound Call Event Sequence
 
-**Successful call flow**: `call_started` → `call_answered` → [PIN entry] → `agora_bridge_start` → `agora_bridge_end` → `call_hangup`
+**Successful call flow**: `call_initiated` → `agora_bridge_start` → `agora_bridge_end` → `call_hangup`
 
-#### 1. call_started
+#### 1. call_initiated
 
-Sent when inbound call is received. `uid`, `channel`, and `appid` are empty (not yet looked up).
-
-```json
-{
-  "event": "call_started",
-  "callid": "a1b2c3d4-5678-90ef-1234-567890abcdef",
-  "timestamp": 1736953100,
-  "uid": "",
-  "channel": "",
-  "to": "+14155554444",
-  "from": "+14155551234",
-  "direction": "inbound",
-  "appid": ""
-}
-```
-
-#### 2. call_answered
-
-Sent when FreeSWITCH answers the call (before PIN entry).
+Sent after PIN lookup succeeds. First webhook event for inbound calls.
 
 ```json
 {
-  "event": "call_answered",
+  "event": "call_initiated",
   "callid": "a1b2c3d4-5678-90ef-1234-567890abcdef",
-  "timestamp": 1736953101,
-  "uid": "",
-  "channel": "",
-  "to": "+14155554444",
-  "from": "+14155551234",
+  "timestamp": 1736953115,
+  "uid": "54321",
+  "channel": "agora_xyz789",
+  "to": "7373",
+  "from": "benweekes",
   "direction": "inbound",
-  "did": "+14155554444",
-  "appid": ""
+  "appid": "xyz789abc123",
+  "pin": "1234"
 }
 ```
 
-**Additional field**: `did` - The DID number that was called
+**Additional field**: `pin` - The PIN that was entered by user
 
-#### 3. agora_bridge_start
+#### 2. agora_bridge_start
 
-Sent after successful PIN lookup. `uid`, `channel`, and `appid` are now populated.
+Sent when audio bridge to Agora RTC is established.
 
 ```json
 {
@@ -567,16 +547,18 @@ Sent after successful PIN lookup. `uid`, `channel`, and `appid` are now populate
   "callid": "a1b2c3d4-5678-90ef-1234-567890abcdef",
   "timestamp": 1736953115,
   "uid": "54321",
-  "channel": "my_channel",
-  "to": "+14155554444",
-  "from": "+14155551234",
+  "channel": "agora_xyz789",
+  "to": "7373",
+  "from": "benweekes",
   "direction": "inbound",
-  "token": "007eJxT...AgBm4=",
-  "appid": "xyz789"
+  "appid": "xyz789abc123",
+  "sdk_options": "{\"audioProfile\":1,\"audioScenario\":1}"
 }
 ```
 
-#### 4. agora_bridge_end
+**Additional field**: `sdk_options` - JSON string of Agora SDK options
+
+#### 3. agora_bridge_end
 
 Sent when Agora RTC session ends normally.
 
@@ -586,16 +568,15 @@ Sent when Agora RTC session ends normally.
   "callid": "a1b2c3d4-5678-90ef-1234-567890abcdef",
   "timestamp": 1736953245,
   "uid": "54321",
-  "channel": "my_channel",
-  "to": "+14155554444",
-  "from": "+14155551234",
+  "channel": "agora_xyz789",
+  "to": "+441473943851",
+  "from": "+447712886300",
   "direction": "inbound",
-  "token": "007eJxT...AgBm4=",
-  "appid": "xyz789"
+  "appid": "xyz789abc123"
 }
 ```
 
-#### 5. call_hangup
+#### 4. call_hangup
 
 **GUARANTEED to fire**. `uid`, `channel`, and `appid` may be empty if call never reached Agora (e.g., invalid PIN).
 
@@ -605,17 +586,23 @@ Sent when Agora RTC session ends normally.
   "callid": "a1b2c3d4-5678-90ef-1234-567890abcdef",
   "timestamp": 1736953246,
   "uid": "54321",
-  "channel": "my_channel",
-  "to": "+14155554444",
-  "from": "+14155551234",
+  "channel": "agora_xyz789",
+  "to": "+441473943851",
+  "from": "+447712886300",
   "direction": "inbound",
   "hangup_cause": "NORMAL_CLEARING",
   "duration": "145",
   "billsec": "131",
   "sip_disposition": "send_bye",
-  "appid": "xyz789"
+  "appid": "xyz789abc123"
 }
 ```
+
+**Additional fields**:
+- `hangup_cause` - FreeSWITCH hangup cause
+- `duration` - Total call duration in seconds
+- `billsec` - Billable seconds
+- `sip_disposition` - SIP hangup disposition
 
 ### Webhook Endpoint Requirements
 
