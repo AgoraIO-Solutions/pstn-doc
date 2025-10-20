@@ -110,7 +110,8 @@ In this scenario, the end-user receives a phone call which connects them directl
   "timeout":"3600",
   "sip":"acme.pstn.ashburn.twilio.com",
   "webhook_url":"https://example.com/webhooks/call-events",
-  "sdk_options":"{\"rtc.client_type\":\"71\"}"
+  "sdk_options":"{\"rtc.client_type\":\"71\"}",
+  "audio_scenario":"0"
 }
 ```
 - `appid` (string): the Agora project appid
@@ -128,6 +129,9 @@ In this scenario, the end-user receives a phone call which connects them directl
 - `timeout` (string) [optional]: max duration for outbound call in seconds. Default 3600 seconds which is 1 hour
 - `webhook_url` (string) [optional]: your webhook endpoint to receive call lifecycle events (see [Webhook Events](#webhooks))
 - `sdk_options` (string) [optional]: JSON string of Agora SDK options (e.g., `{"rtc.client_type":"71"}`)
+- `audio_scenario` (string) [optional]: Audio optimization mode. Values:
+  - "0": Automatic Human Conferencing Scenarios (default)
+  - "10": Optimized To Talk to AI Agents
 - `region` (string): the user's region where they will likely be located and calling from. Values:
 
       AREA_CODE_NA: North America
@@ -253,7 +257,8 @@ Body:
   "channel":"agora_channel",
   "appid":"your_appid_here",
   "webhook_url":"https://example.com/webhooks/call-events",
-  "sdk_options":"{\"rtc.client_type\":\"71\"}"
+  "sdk_options":"{\"rtc.client_type\":\"71\"}",
+  "audio_scenario":"0"
 }
 ```
 
@@ -263,6 +268,9 @@ Body:
 - `appid` (string) [optional]: the Agora appid for your project
 - `webhook_url` (string) [optional]: your webhook endpoint to receive call lifecycle events (see [Webhook Events](#webhooks))
 - `sdk_options` (string) [optional]: JSON string of Agora SDK options (e.g., `{"rtc.client_type":"71"}`)
+- `audio_scenario` (string) [optional]: Audio optimization mode. Values:
+  - "0": Automatic Human Conferencing Scenarios (default)
+  - "10": Optimized To Talk to AI Agents
 
 ### Error Code Responses
 404  Not Found
