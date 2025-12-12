@@ -650,20 +650,19 @@ Your webhook endpoint should:
 
 Please add the following IP addresses to any Access Control Lists which restrict outbound calls from Agora's SIP Gateway by IP addresses.
 
-13.41.31.20
-3.9.67.24
-52.3.185.227
-52.9.29.181
-34.233.232.16
-3.142.129.19
-52.15.168.71
-3.150.139.106
-3.18.93.182
-13.40.252.243
-13.41.139.134
-13.204.36.207
-43.204.1.53
-
+13.41.31.20/32      
+3.9.67.24/32      
+52.3.185.227/32      
+52.9.29.181/32      
+34.233.232.16/32      
+3.142.129.19/32      
+52.15.168.71/32      
+3.150.139.106/32      
+3.18.93.182/32      
+13.40.252.243/32      
+13.41.139.134/32
+13.204.36.207/32      
+43.204.1.53/32      
 
 ## Configure Twilio <a name="configtwilio"></a>
 Configure your own Twilio account to work with the Inbound and Outbound calling APIs above.
