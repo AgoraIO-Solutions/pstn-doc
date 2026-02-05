@@ -105,10 +105,11 @@ In this scenario, the end-user receives a phone call which connects them directl
   "channel":"agora_channel",
   "region":"AREA_CODE_NA",
   "prompt":"true",
-  "to":"+447712886400#333",
+  "to":"+447712886400;dtmf=1234#",
   "from":"+1800222333",
   "timeout":"3600",
-  "sip":"acme.pstn.ashburn.twilio.com",
+  "sip":"trunk.provider.com:5061;transport=tls;username=+15551234567;password=your_password_here;srtp=true",
+  "sip_domain":"sip.gateway.agora.io",
   "webhook_url":"https://example.com/webhooks/call-events",
   "sdk_options":"{\"rtc.client_type\":\"71\"}",
   "audio_scenario":"0"
@@ -123,9 +124,18 @@ In this scenario, the end-user receives a phone call which connects them directl
   - "beep": Beep then connect - Plays beep sound, then connects to Agora (no prompt)
   - "lazy": Lenient prompt - Plays voice prompt, accepts any DTMF digit to proceed (with beep)
   - "true": Strict PIN mode - Plays voice prompt, requires pressing "1" to proceed (with beep). Any other digit plays goodbye message and hangs up
-- `to` (string): the end-user's phone number to dial. You can optionally add a # followed by numbers which will be played as DTMF once the call connects
+- `to` (string): the end-user's phone number to dial. Supports two methods for sending DTMF tones after the call connects:
+  - **Method 1** (`;dtmf=`): Append `;dtmf=DIGITS` to the number. The digits are sent as DTMF after the call is answered. Example: `"+15551234567;dtmf=696969#"` dials the number, then sends `696969#` as DTMF. Use this to automate PIN entry or navigate IVR menus.
+  - **Method 2** (`#`): Append `#` followed by digits. Example: `"+447712886400#333"` dials the number, then sends `333` as DTMF.
 - `from` (string): the calling number displayed on the end-user's phone during ringing
-- `sip` (string) [optional]: termination sip uri or leave blank if being routed by this service
+- `sip` (string) [optional]: SIP trunk URI for call termination, or leave blank to use Agora's routing. Supports optional parameters appended with `;`:
+  - `transport=tls` — use TLS signaling (recommended)
+  - `username=+15551234567` — SIP authentication username
+  - `password=your_password_here` — SIP authentication password
+  - `srtp=true` — enable SRTP media encryption
+
+  Example: `"trunk.provider.com:5061;transport=tls;username=+15551234567;password=your_password_here;srtp=true"`
+- `sip_domain` (string) [optional]: force the call to route through a specific Agora gateway by domain name. The gateway must be configured and available. When provided, the gateway also uses this domain in the SIP From header, which is required by some providers (e.g., WhatsApp/Meta). Returns `400` if the domain is not configured, `503` if the gateway is disabled or at capacity.
 - `timeout` (string) [optional]: max duration for outbound call in seconds. Default 3600 seconds which is 1 hour
 - `webhook_url` (string) [optional]: your webhook endpoint to receive call lifecycle events (see [Webhook Events](#webhooks))
 - `sdk_options` (string) [optional]: JSON string of Agora SDK options (e.g., `{"rtc.client_type":"71"}`)
