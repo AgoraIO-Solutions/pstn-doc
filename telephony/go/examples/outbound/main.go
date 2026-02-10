@@ -10,6 +10,7 @@
 //	export APPID="your_appid"
 //	export TO_NUMBER="+18005551234"
 //	export FROM_NUMBER="+15551234567"
+//	export SIP="your-lb-host:5081;transport=tls"
 //	go run .
 package main
 
@@ -73,6 +74,7 @@ func main() {
 	toNumber := requireEnv("TO_NUMBER")
 	fromNumber := envOrDefault("FROM_NUMBER", "+15551234567")
 	region := envOrDefault("REGION", "AREA_CODE_NA")
+	sip := os.Getenv("SIP")
 
 	wsURL := cmHost + "/v1/ws/events"
 	clientID := fmt.Sprintf("outbound-example-%d", time.Now().UnixMilli())
@@ -101,6 +103,7 @@ func main() {
 		UID:     "100",
 		Token:   appID, // use appid as token if RTC tokens not enabled
 		Region:  region,
+		Sip:     sip, // route via load balancer (optional)
 		Timeout: "60",
 	})
 	if err != nil {
