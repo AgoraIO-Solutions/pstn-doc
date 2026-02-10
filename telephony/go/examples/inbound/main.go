@@ -6,7 +6,7 @@
 //
 // Usage:
 //
-//	export CM_HOST="wss://your-cm-host"
+//	export CM_HOST="wss://sipcm.agora.io"
 //	export AUTH_TOKEN="Basic YOUR_TOKEN"
 //	export APPID="your_appid"
 //	export DID="18005551234"
@@ -99,7 +99,7 @@ func (h *handler) OnDTMFReceived(call *telephony.Call, digits string) {
 }
 
 func main() {
-	cmHost := envOrDefault("CM_HOST", "wss://your-cm-host")
+	cmHost := envOrDefault("CM_HOST", "wss://sipcm.agora.io")
 	authToken := requireEnv("AUTH_TOKEN")
 	appID := requireEnv("APPID")
 	did := requireEnv("DID")

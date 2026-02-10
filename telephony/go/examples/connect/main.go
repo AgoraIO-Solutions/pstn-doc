@@ -5,7 +5,7 @@
 //
 // Usage:
 //
-//	export CM_HOST="wss://your-cm-host"
+//	export CM_HOST="wss://sipcm.agora.io"
 //	export AUTH_TOKEN="Basic YOUR_TOKEN"
 //	export APPID="your_appid"
 //	go run .
@@ -33,7 +33,7 @@ func (h *handler) OnCallHangup(call *telephony.Call)                 {}
 func (h *handler) OnError(err error)                                 { log.Printf("Error: %v", err) }
 
 func main() {
-	cmHost := envOrDefault("CM_HOST", "wss://your-cm-host")
+	cmHost := envOrDefault("CM_HOST", "wss://sipcm.agora.io")
 	authToken := requireEnv("AUTH_TOKEN")
 	appID := requireEnv("APPID")
 

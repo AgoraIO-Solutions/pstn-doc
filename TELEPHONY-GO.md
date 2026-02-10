@@ -10,7 +10,7 @@ Go SDK for the Agora SIP Call Manager WebSocket API. Places, receives, and manag
 - **Go 1.21+** — [install](https://go.dev/doc/install)
 - **Agora App ID** — from your [Agora Console](https://console.agora.io) project
 - **Auth token** — provided by Agora when your App ID is provisioned for SIP/PSTN
-- **CM WebSocket URL** — provided during provisioning (e.g. `wss://your-cm-host`)
+- **CM WebSocket URL** — provided during provisioning (e.g. `wss://sipcm.agora.io`)
 - **For inbound calls:** a DID (phone number) provisioned on the CM
 
 ## Installation
@@ -35,7 +35,7 @@ The fastest way to verify your setup:
 cd telephony/go/examples
 
 # 1. Set your credentials
-export CM_HOST="wss://your-cm-host"
+export CM_HOST="wss://sipcm.agora.io"
 export AUTH_TOKEN="Basic YOUR_TOKEN"
 export APPID="your_appid"
 
@@ -67,7 +67,7 @@ import (
 
 func main() {
     client := telephony.NewClient(
-        "wss://your-cm-host/v1/ws/events",
+        "wss://sipcm.agora.io/v1/ws/events",
         "Basic YOUR_TOKEN",
         "my-client-1",
         "YOUR_APPID",
@@ -115,7 +115,7 @@ Creates a new WebSocket client. Does not connect — call `Connect()` to establi
 
 | Parameter | Description |
 |-----------|-------------|
-| `wsURL` | WebSocket endpoint (e.g. `wss://your-cm-host/v1/ws/events`) |
+| `wsURL` | WebSocket endpoint (e.g. `wss://sipcm.agora.io/v1/ws/events`) |
 | `authToken` | Auth token from CM config (e.g. `Basic LkP3sQ8j...`) |
 | `clientID` | Unique identifier for this client instance |
 | `appID` | Agora App ID. Use `"MULTI"` for multi-appid mode (see [MULTI Mode](#multi-appid-mode)) |
@@ -452,7 +452,7 @@ Register with `appID: "MULTI"` and provide a corresponding `authorization_MULTI`
 
 ```go
 client := telephony.NewClient(
-    "wss://your-cm-host/v1/ws/events",
+    "wss://sipcm.agora.io/v1/ws/events",
     "Basic MULTI_TOKEN",
     "my-multi-client",
     "MULTI",                    // special appid — enables multi-appid mode
@@ -743,7 +743,7 @@ Runnable examples are in [`telephony/go/examples/`](telephony/go/examples/). Eac
 ```bash
 cd telephony/go/examples
 
-export CM_HOST="wss://your-cm-host"
+export CM_HOST="wss://sipcm.agora.io"
 export AUTH_TOKEN="Basic YOUR_TOKEN"
 export APPID="your_appid"
 ```
@@ -764,7 +764,7 @@ go run ./outbound/
 
 Output (one JSON line per event):
 ```
-Connecting to wss://your-cm-host ...
+Connecting to wss://sipcm.agora.io ...
 Dialing +18005551234 from +15551234567 ...
 Call placed: callid=3636eaab-7dfe-... channel=example_1707654321000
 {"event":"call_answered","callid":"3636eaab-7dfe-...","timestamp":"..."}
@@ -806,7 +806,7 @@ The client subscribes to the DID and waits. When someone calls that number (or y
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `CM_HOST` | yes | — | CM WebSocket host (e.g. `wss://your-cm-host`) |
+| `CM_HOST` | yes | — | CM WebSocket host (e.g. `wss://sipcm.agora.io`) |
 | `AUTH_TOKEN` | yes | — | Auth token (e.g. `Basic LkP3sQ8j...`) |
 | `APPID` | yes | — | Agora App ID |
 | `TO_NUMBER` | outbound | — | Destination phone number (E.164 format) |
