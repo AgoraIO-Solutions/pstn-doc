@@ -5,6 +5,30 @@ Go SDK for the Agora SIP Call Manager WebSocket API. Places, receives, and manag
 **SDK source:** [`telephony/go/client.go`](telephony/go/client.go)
 **Runnable examples:** [`telephony/go/examples/`](telephony/go/examples/)
 
+## Table of Contents
+
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [API Reference](#api-reference)
+  - [Methods](#methods)
+    - [Constructor](#constructor)
+    - [Connection](#connection)
+    - [Calling](#calling)
+    - [Phone Number Subscription](#phone-number-subscription)
+    - [Call State](#call-state)
+  - [Events](#events)
+    - [Event Handlers](#event-handlers)
+    - [Event Reference](#event-reference)
+- [MULTI-AppID Mode](#multi-appid-mode)
+- [Phone Number Subscription — Inbound Call Routing](#phone-number-subscription--inbound-call-routing)
+- [Webhook URL Auto-Injection](#webhook-url-auto-injection)
+- [Call Flows](#call-flows)
+- [Concurrency & Thread Safety](#concurrency--thread-safety)
+- [Complete Handler Example](#complete-handler-example)
+- [Examples](#examples)
+- [Troubleshooting](#troubleshooting)
+
 ## Prerequisites
 
 - **Go 1.21+** — [install](https://go.dev/doc/install)
@@ -107,9 +131,11 @@ See [`examples/outbound/main.go`](telephony/go/examples/outbound/main.go) for a 
 
 ## API Reference
 
-### Constructor
+### Methods
 
-#### `NewClient(wsURL, authToken, clientID, appID string) *Client`
+#### Constructor
+
+##### `NewClient(wsURL, authToken, clientID, appID string) *Client`
 
 Creates a new WebSocket client. Does not connect — call `Connect()` to establish the connection.
 
@@ -126,9 +152,9 @@ client := telephony.NewClient(wsURL, "Basic mytoken", "client-1", "20b7c51f...")
 
 ---
 
-### Connection
+#### Connection
 
-#### `Connect(ctx context.Context) error`
+##### `Connect(ctx context.Context) error`
 
 Connects to the WebSocket server, performs the handshake (connected → register → registered), and starts the event loop. Blocks until registration completes or fails.
 
@@ -142,7 +168,7 @@ if err := client.Connect(ctx); err != nil {
 
 **Auto-reconnect:** If the connection drops after a successful `Connect()`, the SDK automatically reconnects with exponential backoff (1s → 2s → 4s → ... → 30s max). Call state is preserved across reconnects. `OnError` fires on each disconnect.
 
-#### `Close() error`
+##### `Close() error`
 
 Gracefully closes the connection. Unblocks any pending commands with a "connection lost" error. Stops the reconnect loop. Safe to call multiple times.
 
@@ -150,15 +176,15 @@ Gracefully closes the connection. Unblocks any pending commands with a "connecti
 defer client.Close()
 ```
 
-#### `IsConnected() bool`
+##### `IsConnected() bool`
 
 Returns whether the client currently has an active WebSocket connection.
 
 ---
 
-### Calling
+#### Calling
 
-#### `Dial(ctx context.Context, params DialParams) (*DialResult, error)`
+##### `Dial(ctx context.Context, params DialParams) (*DialResult, error)`
 
 Places an outbound call. The CM selects a gateway (or uses the `Sip`/`SipDomain` override) and forwards the call. Returns the call ID on success.
 
@@ -204,7 +230,7 @@ fmt.Println("CallID:", result.CallID)
 | `CallID` | `string` | Unique call identifier for subsequent operations |
 | `Data` | `map[string]interface{}` | Raw response data from the CM |
 
-#### `Accept(ctx context.Context, callid string, creds AcceptParams) error`
+##### `Accept(ctx context.Context, callid string, creds AcceptParams) error`
 
 Accepts an inbound call received via `OnCallIncoming`. Provides Agora credentials for the bridge.
 
@@ -237,7 +263,7 @@ func (h *MyHandler) OnCallIncoming(call *telephony.Call) bool {
 | `SDKOptions` | no | Agora SDK options JSON string |
 | `AudioScenario` | no | Agora audio scenario |
 
-#### `Reject(ctx context.Context, callid string, reason string) error`
+##### `Reject(ctx context.Context, callid string, reason string) error`
 
 Rejects an inbound call. The gateway receives a 404 response.
 
@@ -245,7 +271,7 @@ Rejects an inbound call. The gateway receives a 404 response.
 err := client.Reject(ctx, callID, "busy")
 ```
 
-#### `Hangup(ctx context.Context, callid string) error`
+##### `Hangup(ctx context.Context, callid string) error`
 
 Ends an active call. Automatically uses `endcall` for outbound calls and `hangup` for inbound calls.
 
@@ -259,7 +285,7 @@ err := client.Hangup(ctx, inboundCallID)
 
 The call is removed from `GetActiveCalls()` after a successful hangup.
 
-#### `SendDTMF(ctx context.Context, callid string, digits string) error`
+##### `SendDTMF(ctx context.Context, callid string, digits string) error`
 
 Sends DTMF tones on an active call. Works on both outbound and inbound accepted calls. Valid digits: `0-9`, `*`, `#`.
 
@@ -273,7 +299,7 @@ err := client.SendDTMF(ctx, inboundCallID, "5678*")
 
 The gateway echoes back a `dtmf_received` event via `OnDTMFReceived`.
 
-#### `Bridge(ctx context.Context, callid string, creds BridgeParams) error`
+##### `Bridge(ctx context.Context, callid string, creds BridgeParams) error`
 
 Bridges an active call to an Agora channel. Used for re-bridging after `Unbridge`.
 
@@ -296,7 +322,7 @@ err := client.Bridge(ctx, callID, telephony.BridgeParams{
 | `SDKOptions` | no | Agora SDK options JSON string |
 | `AudioScenario` | no | Agora audio scenario |
 
-#### `Unbridge(ctx context.Context, callid string) error`
+##### `Unbridge(ctx context.Context, callid string) error`
 
 Removes the Agora channel bridge from the call. The SIP call stays active.
 
@@ -304,7 +330,7 @@ Removes the Agora channel bridge from the call. The SIP call stays active.
 err := client.Unbridge(ctx, callID)
 ```
 
-#### `Transfer(ctx context.Context, callid string, destination string, leg string) error`
+##### `Transfer(ctx context.Context, callid string, destination string, leg string) error`
 
 Transfers a call to another destination.
 
@@ -324,11 +350,11 @@ err := client.Transfer(ctx, callID, "+18001234567", "B")
 
 ---
 
-### Phone Number Subscription
+#### Phone Number Subscription
 
 Control which inbound calls your client receives. Without subscriptions, the client is catch-all (receives all events for its appid).
 
-#### `SetSubscribeNumbers(numbers []string)`
+##### `SetSubscribeNumbers(numbers []string)`
 
 Set phone numbers to subscribe to **before** calling `Connect()`. Numbers are sent as part of the registration message.
 
@@ -337,7 +363,7 @@ client.SetSubscribeNumbers([]string{"+18005551234", "+18005559876"})
 client.Connect(ctx) // subscription sent during registration
 ```
 
-#### `Subscribe(ctx context.Context, numbers []string) error`
+##### `Subscribe(ctx context.Context, numbers []string) error`
 
 Update subscriptions on a **live** connection. Replaces the previous subscription list.
 
@@ -350,9 +376,9 @@ Numbers are normalized to digits on the server (leading `+` and non-digit charac
 
 ---
 
-### Call State
+#### Call State
 
-#### `GetActiveCalls() []*Call`
+##### `GetActiveCalls() []*Call`
 
 Returns all currently tracked calls.
 
@@ -377,9 +403,11 @@ for _, call := range client.GetActiveCalls() {
 
 ---
 
-### Event Handlers
+### Events
 
-#### `SetHandler(handler EventHandler)`
+#### Event Handlers
+
+##### `SetHandler(handler EventHandler)`
 
 Set the event handler before calling `Connect()`. The handler receives all call lifecycle events.
 
@@ -387,7 +415,7 @@ Set the event handler before calling `Connect()`. The handler receives all call 
 client.SetHandler(&MyHandler{})
 ```
 
-#### `EventHandler` Interface
+##### `EventHandler` Interface
 
 All methods are required. Events fire asynchronously from the WebSocket read loop.
 
@@ -404,7 +432,7 @@ type EventHandler interface {
 }
 ```
 
-#### `DTMFHandler` Interface (Optional)
+##### `DTMFHandler` Interface (Optional)
 
 Implement this alongside `EventHandler` to receive DTMF events. The SDK checks for this interface at runtime.
 
@@ -414,7 +442,7 @@ type DTMFHandler interface {
 }
 ```
 
-### Event Reference
+#### Event Reference
 
 Events arrive via WebSocket from the gateway's webhook. The CM routes webhook POSTs to the WS client that owns the call.
 
