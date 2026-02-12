@@ -186,7 +186,7 @@ Returns whether the client currently has an active WebSocket connection.
 
 ##### `Dial(ctx context.Context, params DialParams) (*DialResult, error)`
 
-Places an outbound call. The CM selects a gateway (or uses the `Sip`/`SipDomain` override) and forwards the call. Returns the call ID on success.
+Places an outbound call. The CM selects a gateway (or uses the `Sip`/`SipDomain` override) and forwards the call with the provided Agora credentials. When the remote party answers, the gateway automatically bridges the PSTN leg into the Agora channel — no separate `Bridge()` call is needed.
 
 ```go
 result, err := client.Dial(ctx, telephony.DialParams{
@@ -232,7 +232,7 @@ fmt.Println("CallID:", result.CallID)
 
 ##### `Accept(ctx context.Context, callid string, creds AcceptParams) error`
 
-Accepts an inbound call received via `OnCallIncoming`. Provides Agora credentials for the bridge.
+Accepts an inbound call received via `OnCallIncoming`. The Agora credentials are passed to the gateway via the held lookup response, and the gateway automatically bridges the PSTN leg into the Agora channel on answer — no separate `Bridge()` call is needed.
 
 ```go
 func (h *MyHandler) OnCallIncoming(call *telephony.Call) bool {
@@ -301,7 +301,7 @@ The gateway echoes back a `dtmf_received` event via `OnDTMFReceived`.
 
 ##### `Bridge(ctx context.Context, callid string, creds BridgeParams) error`
 
-Bridges an active call to an Agora channel. Used for re-bridging after `Unbridge`.
+Bridges an active call into a different Agora channel. Since `Dial()` and `Accept()` auto-bridge on answer, this is only needed for mid-call channel moves — typically after `Unbridge()`, or to switch the call to new Agora credentials without dropping the SIP leg.
 
 ```go
 err := client.Bridge(ctx, callID, telephony.BridgeParams{
