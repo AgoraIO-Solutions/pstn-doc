@@ -313,9 +313,9 @@ func (c *Client) Dial(ctx context.Context, params DialParams) (*DialResult, erro
 	if params.SipDomain != "" {
 		msg["sip_domain"] = params.SipDomain
 	}
-	if params.AppID != "" {
-		msg["appid"] = params.AppID
-	}
+	c.setAppID(msg, params.AppID)
+
+	resolvedAppID := c.resolveAppID(params.AppID)
 
 	// Pre-track call by channel:uid
 	c.mu.Lock()
@@ -327,7 +327,7 @@ func (c *Client) Dial(ctx context.Context, params DialParams) (*DialResult, erro
 		From:      params.From,
 		Channel:   params.Channel,
 		UID:       params.UID,
-		AppID:     params.AppID,
+		AppID:     resolvedAppID,
 	}
 	c.mu.Unlock()
 
@@ -380,9 +380,7 @@ func (c *Client) Accept(ctx context.Context, callid string, creds AcceptParams) 
 		"channel": creds.Channel,
 		"uid":     creds.UID,
 	}
-	if creds.AppID != "" {
-		msg["appid"] = creds.AppID
-	}
+	c.setAppID(msg, creds.AppID)
 	if creds.WebhookURL != "" {
 		msg["webhook_url"] = creds.WebhookURL
 	}
@@ -405,10 +403,11 @@ func (c *Client) Accept(ctx context.Context, callid string, creds AcceptParams) 
 	}
 
 	// Update call's AppID so subsequent commands (send_dtmf, hangup) include it
-	if creds.AppID != "" {
+	resolvedAppID := c.resolveAppID(creds.AppID)
+	if resolvedAppID != "" && resolvedAppID != "MULTI" {
 		c.mu.Lock()
 		if call := c.calls[callid]; call != nil {
-			call.AppID = creds.AppID
+			call.AppID = resolvedAppID
 		}
 		c.mu.Unlock()
 	}
@@ -445,9 +444,7 @@ func (c *Client) Bridge(ctx context.Context, callid string, creds BridgeParams) 
 		"channel": creds.Channel,
 		"uid":     creds.UID,
 	}
-	if creds.AppID != "" {
-		msg["appid"] = creds.AppID
-	}
+	c.setAppID(msg, creds.AppID)
 	if creds.SDKOptions != "" {
 		msg["sdk_options"] = creds.SDKOptions
 	}
@@ -475,10 +472,12 @@ func (c *Client) Unbridge(ctx context.Context, callid string) error {
 		"callid": callid,
 	}
 	c.mu.RLock()
-	if call := c.calls[callid]; call != nil && call.AppID != "" {
-		msg["appid"] = call.AppID
+	callAppID := ""
+	if call := c.calls[callid]; call != nil {
+		callAppID = call.AppID
 	}
 	c.mu.RUnlock()
+	c.setAppID(msg, callAppID)
 	resp, err := c.sendCommand(ctx, "unbridge", msg)
 	if err != nil {
 		return err
@@ -507,9 +506,11 @@ func (c *Client) Hangup(ctx context.Context, callid string) error {
 		"action": action,
 		"callid": callid,
 	}
-	if call != nil && call.AppID != "" {
-		msg["appid"] = call.AppID
+	callAppID := ""
+	if call != nil {
+		callAppID = call.AppID
 	}
+	c.setAppID(msg, callAppID)
 
 	resp, err := c.sendCommand(ctx, action, msg)
 	if err != nil {
@@ -540,10 +541,12 @@ func (c *Client) Transfer(ctx context.Context, callid, destination, leg string) 
 		msg["leg"] = leg
 	}
 	c.mu.RLock()
-	if call := c.calls[callid]; call != nil && call.AppID != "" {
-		msg["appid"] = call.AppID
+	callAppID := ""
+	if call := c.calls[callid]; call != nil {
+		callAppID = call.AppID
 	}
 	c.mu.RUnlock()
+	c.setAppID(msg, callAppID)
 
 	resp, err := c.sendCommand(ctx, "transfer", msg)
 	if err != nil {
@@ -566,10 +569,12 @@ func (c *Client) SendDTMF(ctx context.Context, callid, digits string) error {
 		"digits": digits,
 	}
 	c.mu.RLock()
-	if call := c.calls[callid]; call != nil && call.AppID != "" {
-		msg["appid"] = call.AppID
+	callAppID := ""
+	if call := c.calls[callid]; call != nil {
+		callAppID = call.AppID
 	}
 	c.mu.RUnlock()
+	c.setAppID(msg, callAppID)
 	resp, err := c.sendCommand(ctx, "send_dtmf", msg)
 	if err != nil {
 		return err
@@ -598,6 +603,22 @@ func (c *Client) GetActiveCalls() []*Call {
 // IsConnected returns whether the client is currently connected.
 func (c *Client) IsConnected() bool {
 	return c.connected.Load()
+}
+
+// resolveAppID returns the explicit appid if set, otherwise the client's registered appid.
+func (c *Client) resolveAppID(explicit string) string {
+	if explicit != "" {
+		return explicit
+	}
+	return c.appID
+}
+
+// setAppID sets msg["appid"] if the resolved appid is non-empty and not "MULTI".
+func (c *Client) setAppID(msg map[string]interface{}, explicit string) {
+	appid := c.resolveAppID(explicit)
+	if appid != "" && appid != "MULTI" {
+		msg["appid"] = appid
+	}
 }
 
 // --- Internal methods ---
