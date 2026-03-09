@@ -49,13 +49,15 @@ In this scenario, the end-user dials a phone number displayed to them and enters
   "token":"006d2776fef40dc864dc7a438e3b871IACGnkorQsr0iCpBmzNwKEdzKuAv1b1zRcMy0cOradw6mHN/il8AAAAAIgCQqbAFeaVzZgQAAQDw0oBmAgDw0oBmAwDw0oBmBADw0oBm",
   "uid":"123",
   "channel":"agora_channel",
-  "region":"AREA_CODE_NA"
+  "region":"AREA_CODE_NA",
+  "video": true
 }
 ```
 - `appid` (string): the Agora project appid
 - `token` (string) [optional]: a generated Agora RTC access token
 - `uid` (string) [optional]: a user uid
 - `channel` (string): an Agora channel name
+- `video` (boolean) [optional]: Enable video for this call. When `true`, the gateway uses video-capable SIP ports (H264+VP8). Default: `false`
 - `region` (string): the user's region where they will likely be located and calling from. Values:
 
       AREA_CODE_NA: North America
@@ -112,7 +114,8 @@ In this scenario, the end-user receives a phone call which connects them directl
   "sip_domain":"sip.gateway.agora.io",
   "webhook_url":"https://example.com/webhooks/call-events",
   "sdk_options":"{\"rtc.client_type\":\"71\"}",
-  "audio_scenario":"0"
+  "audio_scenario":"0",
+  "video": true
 }
 ```
 - `appid` (string): the Agora project appid
@@ -142,6 +145,7 @@ In this scenario, the end-user receives a phone call which connects them directl
 - `audio_scenario` (string) [optional]: Audio optimization mode. Values:
   - "0": Automatic Human Conferencing Scenarios (default)
   - "10": Optimized To Talk to AI Agents
+- `video` (boolean) [optional]: Enable video for this call. When `true`, the gateway uses video-capable SIP ports (H264+VP8). Default: `false`
 - `region` (string): the user's region where they will likely be located and calling from. Values:
 
       AREA_CODE_NA: North America
@@ -199,13 +203,15 @@ In this scenario, an inbound SIP address is requested. When the SIP address is d
   "token":"006d2776fef40dc864dc7a438e3b871IACGnkorQsr0iCpBmzNwKEdzKuAv1b1zRcMy0cOradw6mHN/il8AAAAAIgCQqbAFeaVzZgQAAQDw0oBmAgDw0oBmAwDw0oBmBADw0oBm",
   "uid":"123",
   "channel":"agora_channel",
-  "region":"AREA_CODE_NA"
+  "region":"AREA_CODE_NA",
+  "video": true
 }
 ```
 - `appid` (string): the Agora project appid
 - `token` (string) [optional]: a generated access token
 - `uid` (string) [optional]: a user uid
 - `channel` (string): an Agora channel name
+- `video` (boolean) [optional]: Enable video for this call. When `true`, the gateway uses video-capable SIP ports (H264+VP8). Default: `false`
 - `region` (string): the user's region where they will likely be located and calling from. Values:
 
       AREA_CODE_NA: North America
@@ -268,7 +274,8 @@ Body:
   "appid":"your_appid_here",
   "webhook_url":"https://example.com/webhooks/call-events",
   "sdk_options":"{\"rtc.client_type\":\"71\"}",
-  "audio_scenario":"0"
+  "audio_scenario":"0",
+  "video": true
 }
 ```
 
@@ -281,6 +288,7 @@ Body:
 - `audio_scenario` (string) [optional]: Audio optimization mode. Values:
   - "0": Automatic Human Conferencing Scenarios (default)
   - "10": Optimized To Talk to AI Agents
+- `video` (boolean) [optional]: Enable video for this call. When `true`, the gateway uses video-capable SIP ports (H264+VP8). Default: `false`
 
 ### Error Code Responses
 404  Not Found

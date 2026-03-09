@@ -220,6 +220,7 @@ fmt.Println("CallID:", result.CallID)
 | `Timeout` | no | Call timeout in seconds (default: gateway default) |
 | `Sip` | no | SIP URI — routes through a load balancer (e.g. `host:5081;transport=tls`) |
 | `SipDomain` | no | Force a specific gateway by domain |
+| `Video` | no | Enable video for this call (`true`/`false`). When `true`, the gateway uses video-capable SIP ports (H264+VP8). Default: `false` |
 | `AppID` | no | Required in [MULTI mode](#multi-appid-mode) — Agora App ID for this call |
 
 **DialResult:**
@@ -262,6 +263,7 @@ func (h *MyHandler) OnCallIncoming(call *telephony.Call) bool {
 | `WebhookURL` | no | Override webhook URL (auto-injected if omitted) |
 | `SDKOptions` | no | Agora SDK options JSON string |
 | `AudioScenario` | no | Agora audio scenario |
+| `Video` | no | Enable video for this call (`true`/`false`). Default: `false` |
 
 ##### `Reject(ctx context.Context, callid string, reason string) error`
 
@@ -321,6 +323,7 @@ err := client.Bridge(ctx, callID, telephony.BridgeParams{
 | `AppID` | no | Required in [MULTI mode](#multi-appid-mode) |
 | `SDKOptions` | no | Agora SDK options JSON string |
 | `AudioScenario` | no | Agora audio scenario |
+| `Video` | no | Enable video for this call (`true`/`false`). Default: `false` |
 
 ##### `Unbridge(ctx context.Context, callid string) error`
 
