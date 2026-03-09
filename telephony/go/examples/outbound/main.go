@@ -1,16 +1,20 @@
 // Example: outbound
 //
-// Places an outbound call, waits for call events (answered, bridge, DTMF),
-// then hangs up after a short hold.
+// Places an outbound call, waits for answered, sends DTMF, then hangs up.
+//
+// For loopback test calls (dialing a test DID that routes back through the
+// gateway), the A-leg (outbound side) receives ringing → answered → hangup.
+// The agora_bridge_start event only fires on the B-leg (inbound/accept side).
+// For real PSTN calls, the A-leg also receives bridge events.
 //
 // Usage:
 //
-//	export CM_HOST="wss://sipcm.agora.io"
+//	export CM_HOST="wss://sip.dev.cm.01.agora.io"
 //	export AUTH_TOKEN="Basic YOUR_TOKEN"
 //	export APPID="your_appid"
 //	export TO_NUMBER="+18005551234"
 //	export FROM_NUMBER="+15551234567"
-//	export SIP="your-lb-host:5081;transport=tls"
+//	export SIP="sip.dev.lb.01.agora.io:5080"
 //	go run .
 package main
 
@@ -26,7 +30,8 @@ import (
 )
 
 type handler struct {
-	bridged chan struct{}
+	answered chan struct{}
+	bridged  chan struct{}
 }
 
 func (h *handler) OnConnected(sessionID string) {
@@ -41,6 +46,10 @@ func (h *handler) OnCallRinging(call *telephony.Call) {
 
 func (h *handler) OnCallAnswered(call *telephony.Call) {
 	logEvent("call_answered", map[string]string{"callid": call.CallID})
+	select {
+	case h.answered <- struct{}{}:
+	default:
+	}
 }
 
 func (h *handler) OnBridgeStart(call *telephony.Call) {
@@ -68,7 +77,7 @@ func (h *handler) OnDTMFReceived(call *telephony.Call, digits string) {
 }
 
 func main() {
-	cmHost := envOrDefault("CM_HOST", "wss://sipcm.agora.io")
+	cmHost := envOrDefault("CM_HOST", "wss://sip.dev.cm.01.agora.io")
 	authToken := requireEnv("AUTH_TOKEN")
 	appID := requireEnv("APPID")
 	toNumber := requireEnv("TO_NUMBER")
@@ -81,7 +90,7 @@ func main() {
 	channel := fmt.Sprintf("example_%d", time.Now().UnixMilli())
 
 	client := telephony.NewClient(wsURL, authToken, clientID, appID)
-	h := &handler{bridged: make(chan struct{}, 1)}
+	h := &handler{answered: make(chan struct{}, 1), bridged: make(chan struct{}, 1)}
 	client.SetHandler(h)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
@@ -114,22 +123,29 @@ func main() {
 	}
 	fmt.Printf("Call placed: callid=%s channel=%s\n", result.CallID, channel)
 
-	// 3. Wait for bridge (call answered + Agora bridge established)
+	// 3. Wait for answered
 	select {
-	case <-h.bridged:
-		fmt.Println("Call bridged to Agora channel")
+	case <-h.answered:
+		fmt.Println("Call answered")
 	case <-time.After(30 * time.Second):
-		fmt.Println("Timeout waiting for bridge — hanging up")
+		fmt.Println("Timeout waiting for answered — hanging up")
 	}
 
-	// 4. Optional: send DTMF
+	// 4. Send DTMF
 	fmt.Println("Sending DTMF: 1234#")
 	if err := client.SendDTMF(ctx, result.CallID, "1234#"); err != nil {
 		log.Printf("SendDTMF failed: %v", err)
 	}
 
-	// 5. Hold briefly, then hangup
-	time.Sleep(2 * time.Second)
+	// 5. Wait briefly for bridge (fires for real PSTN calls; not for loopback test calls)
+	select {
+	case <-h.bridged:
+		fmt.Println("Call bridged to Agora channel")
+	case <-time.After(3 * time.Second):
+		// Expected for loopback — bridge only fires on B-leg
+	}
+
+	// 6. Hangup
 	fmt.Println("Hanging up...")
 	if err := client.Hangup(ctx, result.CallID); err != nil {
 		log.Printf("Hangup failed: %v", err)
