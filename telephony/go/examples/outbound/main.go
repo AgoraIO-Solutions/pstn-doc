@@ -9,12 +9,12 @@
 //
 // Usage:
 //
-//	export CM_HOST="wss://sip.dev.cm.01.agora.io"
+//	export CM_HOST="wss://sipcm.agora.io"
 //	export AUTH_TOKEN="Basic YOUR_TOKEN"
 //	export APPID="your_appid"
 //	export TO_NUMBER="+18005551234"
 //	export FROM_NUMBER="+15551234567"
-//	export SIP="sip.dev.lb.01.agora.io:5080"
+//	export SIP="your-lb-host:5080"
 //	go run .
 package main
 
@@ -77,7 +77,7 @@ func (h *handler) OnDTMFReceived(call *telephony.Call, digits string) {
 }
 
 func main() {
-	cmHost := envOrDefault("CM_HOST", "wss://sip.dev.cm.01.agora.io")
+	cmHost := envOrDefault("CM_HOST", "wss://sipcm.agora.io")
 	authToken := requireEnv("AUTH_TOKEN")
 	appID := requireEnv("APPID")
 	toNumber := requireEnv("TO_NUMBER")
