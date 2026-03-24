@@ -49,8 +49,7 @@ In this scenario, the end-user dials a phone number displayed to them and enters
   "token":"006d2776fef40dc864dc7a438e3b871IACGnkorQsr0iCpBmzNwKEdzKuAv1b1zRcMy0cOradw6mHN/il8AAAAAIgCQqbAFeaVzZgQAAQDw0oBmAgDw0oBmAwDw0oBmBADw0oBm",
   "uid":"123",
   "channel":"agora_channel",
-  "region":"AREA_CODE_NA",
-  "video": true
+  "region":"AREA_CODE_NA"
 }
 ```
 - `appid` (string): the Agora project appid
@@ -114,8 +113,7 @@ In this scenario, the end-user receives a phone call which connects them directl
   "sip_domain":"sip.gateway.agora.io",
   "webhook_url":"https://example.com/webhooks/call-events",
   "sdk_options":"{\"rtc.client_type\":\"71\"}",
-  "audio_scenario":"0",
-  "video": true
+  "audio_scenario":"0"
 }
 ```
 - `appid` (string): the Agora project appid
@@ -203,8 +201,7 @@ In this scenario, an inbound SIP address is requested. When the SIP address is d
   "token":"006d2776fef40dc864dc7a438e3b871IACGnkorQsr0iCpBmzNwKEdzKuAv1b1zRcMy0cOradw6mHN/il8AAAAAIgCQqbAFeaVzZgQAAQDw0oBmAgDw0oBmAwDw0oBmBADw0oBm",
   "uid":"123",
   "channel":"agora_channel",
-  "region":"AREA_CODE_NA",
-  "video": true
+  "region":"AREA_CODE_NA"
 }
 ```
 - `appid` (string): the Agora project appid
@@ -274,8 +271,7 @@ Body:
   "appid":"your_appid_here",
   "webhook_url":"https://example.com/webhooks/call-events",
   "sdk_options":"{\"rtc.client_type\":\"71\"}",
-  "audio_scenario":"0",
-  "video": true
+  "audio_scenario":"0"
 }
 ```
 
