@@ -56,6 +56,11 @@ In this scenario, the end-user dials a phone number displayed to them and enters
 - `token` (string) [optional]: a generated Agora RTC access token
 - `uid` (string) [optional]: a user uid
 - `channel` (string): an Agora channel name
+- `webhook_url` (string) [optional]: your webhook endpoint to receive call lifecycle events (see [Webhook Events](#webhooks))
+- `sdk_options` (string) [optional]: JSON string of Agora SDK options (e.g., `{"rtc.client_type":"71"}`)
+- `audio_scenario` (string) [optional]: Audio optimization mode. Values:
+  - "0": Automatic Human Conferencing Scenarios (default)
+  - "10": Optimized To Talk to AI Agents
 - `video` (boolean) [optional]: Enable video for this call. When `true`, the gateway uses video-capable SIP ports (H264+VP8). Default: `false`
 - `region` (string): the user's region where they will likely be located and calling from. Values:
 
@@ -208,6 +213,11 @@ In this scenario, an inbound SIP address is requested. When the SIP address is d
 - `token` (string) [optional]: a generated access token
 - `uid` (string) [optional]: a user uid
 - `channel` (string): an Agora channel name
+- `webhook_url` (string) [optional]: your webhook endpoint to receive call lifecycle events (see [Webhook Events](#webhooks))
+- `sdk_options` (string) [optional]: JSON string of Agora SDK options (e.g., `{"rtc.client_type":"71"}`)
+- `audio_scenario` (string) [optional]: Audio optimization mode. Values:
+  - "0": Automatic Human Conferencing Scenarios (default)
+  - "10": Optimized To Talk to AI Agents
 - `video` (boolean) [optional]: Enable video for this call. When `true`, the gateway uses video-capable SIP ports (H264+VP8). Default: `false`
 - `region` (string): the user's region where they will likely be located and calling from. Values:
 
