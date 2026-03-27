@@ -2,8 +2,9 @@
 
 Go SDK for the Agora SIP Call Manager WebSocket API. Places, receives, and manages SIP calls via the Telephony WebSocket interface.
 
-**SDK source:** [`telephony/go/client.go`](telephony/go/client.go)
-**Runnable examples:** [`telephony/go/examples/`](telephony/go/examples/)
+**SDK repo:** [`github.com/AgoraIO-Solutions/telephony-go`](https://github.com/AgoraIO-Solutions/telephony-go)
+**Runnable examples:** [`examples/`](https://github.com/AgoraIO-Solutions/telephony-go/tree/master/examples)
+**E2E tests:** [`test/`](https://github.com/AgoraIO-Solutions/telephony-go/tree/master/test)
 
 ## Table of Contents
 
@@ -39,14 +40,8 @@ Go SDK for the Agora SIP Call Manager WebSocket API. Places, receives, and manag
 
 ## Installation
 
-The SDK is a single file — [`telephony/go/client.go`](telephony/go/client.go). Copy it into your project or use it as a Go module:
-
 ```bash
-# Option 1: Use as a module (update module path as needed)
-go get github.com/AgoraIO/telephony-go
-
-# Option 2: Copy the SDK file directly
-cp telephony/go/client.go your-project/telephony/
+go get github.com/AgoraIO-Solutions/telephony-go
 ```
 
 Dependency: [gorilla/websocket](https://github.com/gorilla/websocket) v1.5.1+
@@ -56,7 +51,8 @@ Dependency: [gorilla/websocket](https://github.com/gorilla/websocket) v1.5.1+
 The fastest way to verify your setup:
 
 ```bash
-cd telephony/go/examples
+git clone https://github.com/AgoraIO-Solutions/telephony-go.git
+cd telephony-go/examples
 
 # 1. Set your credentials
 export CM_HOST="wss://sipcm.agora.io"
@@ -86,7 +82,7 @@ import (
     "fmt"
     "log"
 
-    telephony "github.com/AgoraIO/telephony-go"
+    telephony "github.com/AgoraIO-Solutions/telephony-go"
 )
 
 func main() {
@@ -125,7 +121,7 @@ func main() {
 }
 ```
 
-See [`examples/outbound/main.go`](telephony/go/examples/outbound/main.go) for a complete, runnable version with event logging.
+See [`examples/outbound/main.go`](https://github.com/AgoraIO-Solutions/telephony-go/blob/master/examples/outbound/main.go) for a complete, runnable version with event logging.
 
 ---
 
@@ -766,10 +762,10 @@ func (h *MyHandler) OnDTMFReceived(call *telephony.Call, digits string) {
 
 ## Examples
 
-Runnable examples are in [`telephony/go/examples/`](telephony/go/examples/). Each is a standalone `main.go` with env var configuration.
+Runnable examples are in the [`telephony-go` repo](https://github.com/AgoraIO-Solutions/telephony-go/tree/master/examples). Each is a standalone `main.go` with env var configuration.
 
 ```bash
-cd telephony/go/examples
+cd telephony-go/examples
 
 export CM_HOST="wss://sipcm.agora.io"
 export AUTH_TOKEN="Basic YOUR_TOKEN"
