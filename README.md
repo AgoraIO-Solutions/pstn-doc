@@ -648,24 +648,48 @@ Your webhook endpoint should:
 
 ### Europe
 **Region**: Europe
+
 **Transport**: UDP, TCP
      `sip.eu.lb.01.agora.io:5080`
+
 **Transport**: TLS
      `sip.eu.lb.01.agora.io:5081;transport=tls`
 
+**Transport**: UDP, TCP (video)
+     `sip.eu.lb.01.agora.io:5090`
+
+**Transport**: TLS (video)
+     `sip.eu.lb.01.agora.io:5091;transport=tls`
+
 ### USA
 **Region**: USA
+
 **Transport**: UDP, TCP
      `sip.usa.lb.01.agora.io:5080`
+
 **Transport**: TLS
      `sip.usa.lb.01.agora.io:5081;transport=tls`
 
+**Transport**: UDP, TCP (video)
+     `sip.usa.lb.01.agora.io:5090`
+
+**Transport**: TLS (video)
+     `sip.usa.lb.01.agora.io:5091;transport=tls`
+
 ### Asia
 **Region**: Asia
+
 **Transport**: UDP, TCP
      `sip.as.lb.01.agora.io:5080`
+
 **Transport**: TLS
      `sip.as.lb.01.agora.io:5081;transport=tls`
+
+**Transport**: UDP, TCP (video)
+     `sip.as.lb.01.agora.io:5090`
+
+**Transport**: TLS (video)
+     `sip.as.lb.01.agora.io:5091;transport=tls`
 
 **Media Encryption**: SRTP (SDES) Optional
 **Recommended**: TLS transport for secure signaling
