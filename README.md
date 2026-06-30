@@ -406,6 +406,28 @@ This API allows you to cancel a previous call setup request using any of the thr
 
 When you provide a `webhook_url` parameter (in outbound calls or PIN lookup responses), the SIP gateway will send HTTP POST requests to your endpoint with call lifecycle events.
 
+### Events
+
+These webhook events fire for any call regardless of how it was initiated (HTTP API or SDK over WebSocket).
+
+| Event | When fired | Direction |
+|-------|-----------|-----------|
+| [`call_initiated`](#1-call_initiated) | API received the call request (outbound) or PIN lookup succeeded (inbound) | outbound, inbound |
+| [`call_ringing`](#2-call_ringing) | Remote party is ringing | outbound |
+| [`call_answered`](#3-call_answered) | Remote party answered (SIP-out adds `wav_file`) | outbound, outbound_sip |
+| [`agora_bridge_start`](#4-agora_bridge_start) | Audio bridge to Agora RTC established | outbound, inbound |
+| [`dtmf_received`](#dtmf_received) | DTMF digit detected on the PSTN leg, or echoed after `/send_dtmf` | outbound, inbound |
+| [`agora_bridge_end`](#5-agora_bridge_end) | Agora RTC session ended | outbound, inbound |
+| [`call_hangup`](#6-call_hangup) | Call ended (**guaranteed to fire**) | outbound, inbound, outbound_sip |
+
+**Outbound flow**: `call_initiated` → `call_ringing` → `call_answered` → `agora_bridge_start` → `agora_bridge_end` → `call_hangup`
+
+**Inbound flow**: `call_initiated` → `agora_bridge_start` → `agora_bridge_end` → `call_hangup`
+
+**SIP-out flow** (SIP-only outbound, `sip_outbound.lua`): `call_answered` → `call_hangup` only.
+
+`dtmf_received` is asynchronous — it can fire any time between `call_answered` / `agora_bridge_start` and `call_hangup`.
+
 ### Common Event Fields
 
 All webhook events include these base fields:
@@ -421,6 +443,9 @@ All webhook events include these base fields:
 | `from` | string | Caller ID / origination number (with + prefix) |
 | `direction` | string | Call direction: "inbound", "outbound", or "outbound_sip" |
 | `appid` | string | Agora App ID (may be empty if not provided) |
+| `video` | boolean | `true` if this is a video call (uses SIP ports 5090/5091); `false` for audio-only |
+
+The `token` value passed in the initiating API call is **deliberately never included** in webhook payloads, so the webhook channel cannot be used to leak channel-join credentials.
 
 ### Outbound Call Event Sequence
 
@@ -636,13 +661,47 @@ Sent when Agora RTC session ends normally.
 - `billsec` - Billable seconds
 - `sip_disposition` - SIP hangup disposition
 
+### Asynchronous Events
+
+#### dtmf_received
+
+Sent whenever a DTMF digit is detected on the PSTN/SIP leg of the call. Also fired when digits are pushed onto the leg via the `/send_dtmf` API, so a client that sends DTMF will see its own digits echoed back as a webhook event. Fires for both inbound and outbound calls, any time between `agora_bridge_start` and `call_hangup`.
+
+```json
+{
+  "event": "dtmf_received",
+  "callid": "3636eaab-7dfe-4030-8b06-a7d0ff464360",
+  "timestamp": 1736953220,
+  "uid": "43455",
+  "channel": "agora_iok2rg",
+  "to": "+447712886300",
+  "from": "+441473943851",
+  "direction": "outbound",
+  "appid": "abc123def456",
+  "digits": "1"
+}
+```
+
+**Additional field**: `digits` - The DTMF digit(s) detected. Typically a single character (`0`-`9`, `*`, `#`) per event.
+
+### SIP-only Outbound (`outbound_sip`)
+
+`sip_outbound.lua` emits a reduced event set: only `call_answered` and `call_hangup`. The `call_answered` event includes an extra `wav_file` field with the path to the recorded audio. `call_initiated`, `call_ringing`, `agora_bridge_start`, and `agora_bridge_end` are not produced for SIP-only outbound calls.
+
 ### Webhook Endpoint Requirements
 
 Your webhook endpoint should:
 - Accept HTTP POST requests with JSON body
-- Return `200 OK` status (gateway doesn't retry failed requests)
+- Return `200 OK` status
 - Respond quickly (< 2 seconds recommended)
 - Handle duplicate events gracefully (network retries may occur)
+
+### Delivery Semantics
+
+- **Fire-and-forget.** The gateway sends each webhook in the background and does not block call processing on the response.
+- **Timeouts.** 2 second connect timeout, 5 second maximum total timeout.
+- **No retries.** A non-200 response, a timeout, or a TCP error is logged but the event is **not** redelivered. Make sure `call_hangup` consumers tolerate occasional gaps.
+- **No `token` ever included.** The Agora RTC token passed in the initiating API call is intentionally stripped from all webhook payloads.
 
 ## SIP Entrypoints <a name="sipentry"></a>
 
