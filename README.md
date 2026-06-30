@@ -8,10 +8,15 @@
 5. [Inbound Call Lookup](#calllookup)
 6. [End Call](#endcall)
 7. [Cancel Call](#cancelcall)
-8. [Webhook Events](#webhooks)
-9. [SIP Entrypoints](#sipentry)
-10. [Agora Gateway IPs](#gatewayips)
-11. [Twilio Configuration](#configtwilio)
+8. [Bridge](#bridge)
+9. [Unbridge](#unbridge)
+10. [Re-bridge](#rebridge)
+11. [Send DTMF](#senddtmf)
+12. [Transfer (SIP REFER)](#transfer)
+13. [Webhook Events](#webhooks)
+14. [SIP Entrypoints](#sipentry)
+15. [Agora Gateway IPs](#gatewayips)
+16. [Twilio Configuration](#configtwilio)
 
 ## Overview <a name="overview"></a>
 These REST APIs allow developers to trigger inbound and outbound PSTN and SIP calls which then connect into an Agora channel enabling end-users to participate with their phone for the audio leg of the conference call.
@@ -262,12 +267,30 @@ When provisioned, the gateway calls your REST endpoint when an inbound call arri
 {
   "did":"17177440111",
   "pin":"334455",
-  "callerid":"1765740333"
+  "callerid":"1765740333",
+  "callid":"f577605c-eb3a-4efe-af1b-ee66d5297569",
+  "sip_headers":{ "X-FHIRENC":"abc", "X-Trace-Id":"xyz" }
 }
 ```
 - `did`: the phone number dialed
 - `pin`: the pin entered by caller (empty string if DID not configured for PIN prompts)
 - `callerid`: the phone number of caller
+- `callid` (string): the gateway's unique identifier for this call. Use it
+  immediately to [End Call](#endcall) or [Re-bridge](#rebridge) — it's the
+  same `callid` you will see on lifecycle webhook events. Synchronously
+  available at this lookup exchange, before any lifecycle event fires.
+- `sip_headers` (object): custom `X-*` SIP headers captured on the inbound
+  SIP `INVITE`. Always present (empty object `{}` when no custom headers were
+  on the wire). String-valued — one value per header name (the gateway never
+  sees true on-wire repeats; if the same header name appeared twice, the
+  value is the comma-joined string). Inbound SIP only — this object is
+  always empty for inbound PSTN (DID) calls and for inbound SIP `direct_`
+  numbers (which bypass this webhook).
+
+  Header values come from arbitrary SIP peers and should be treated as
+  **untrusted user input** (SQL/HTML/log-injection considerations on your
+  side). Size-bounded by the gateway: ≤20 names, ≤1024 bytes per value,
+  ≤4 KB serialized total.
 
 ### Success Response Example (from your endpoint)
 *Status Code*: `200 OK`
@@ -303,7 +326,7 @@ Body:
 This webhook allows dynamic call routing to Agora channels. Your DID can be configured to prompt for PIN entry or route directly based on DID/caller ID. Return 404 to reject the call.
 
 ## End Call <a name="endcall"></a>
-Use the callid returned by the outbound call API to terminate an outbound call.
+Terminate a connected call (inbound or outbound) by `callid` + `appid`.
 
 - **URL**: `https://sipcm.agora.io/v1/api/pstn`
 - **Method**: `POST`
@@ -333,7 +356,16 @@ Body:
 404  Not Found
 
 ### Notes
-This API allows you to stop an outbound call that is currently in progress.
+
+Works for both **outbound and inbound** calls.
+
+**How to obtain `callid`:**
+- **Outbound:** returned in the [Outbound PSTN](#outbound) success response,
+  and on every webhook lifecycle event.
+- **Inbound:** delivered in the [Inbound Call Lookup](#calllookup) webhook
+  body, *and* on lifecycle events. You can call `endcall` immediately from
+  your pinlookup endpoint with the `callid` you just received — no need to
+  wait for `call_initiated`.
 
 ## Cancel Call <a name="cancelcall"></a>
 Cancel a call setup request created by Inbound PSTN, Inbound SIP API or Static PIN webhook request. If the call is already in progress, it will be stopped. You can use one of three methods to cancel a call:
@@ -402,6 +434,217 @@ Body:
 ### Notes
 This API allows you to cancel a previous call setup request using any of the three methods above. You can cancel calls both before and after they connect - if the call is already in progress, it will be terminated.
 
+## Bridge <a name="bridge"></a>
+
+Attach a connected call's audio to an Agora channel. Used to (re-)establish
+the bridge after [Unbridge](#unbridge), or to bridge a call that was placed
+without an Agora channel attached. For switching a *currently-bridged*
+call to a different channel, use [Re-bridge](#rebridge) instead.
+
+- **URL**: `https://sipcm.agora.io/v1/api/pstn`
+- **Method**: `POST`
+
+### Request Body Parameters as JSON
+```json
+{
+  "action":"bridge",
+  "appid":"your_appid_here",
+  "callid":"f577605c-eb3a-4efe-af1b-ee66d5297569",
+  "channel":"agora_channel",
+  "token":"<RTC token>",
+  "uid":"123"
+}
+```
+- `appid` (string): the Agora project appid
+- `callid` (string): the call id of the connected call
+- `channel` (string): destination Agora channel
+- `token` (string): RTC token for the destination channel (use the appid if
+  tokens are not enabled for your project)
+- `uid` (string): Agora uid the bridge should join as
+- `sdk_options` (string) [optional]: JSON string of Agora SDK options
+- `audio_scenario` (string) [optional]: audio optimization mode (see
+  [Inbound Call Lookup](#calllookup))
+- `webhook_url` (string) [optional]: your webhook endpoint for lifecycle events
+
+### Success Response Example
+```json
+{ "success":true }
+```
+
+### Error Code Responses
+404  Not Found (callid not active)
+
+### Notes
+Works for both inbound and outbound calls. The SIP/PSTN leg stays up
+throughout. Emits `agora_bridge_start` on success (and `agora_bridge_end`
++ `agora_bridge_start` on a subsequent bridge after an unbridge).
+
+## Unbridge <a name="unbridge"></a>
+
+Remove the Agora channel bridge from a connected call. The SIP/PSTN leg
+stays up; only the Agora connection is closed. Use [Bridge](#bridge) to
+reattach.
+
+- **URL**: `https://sipcm.agora.io/v1/api/pstn`
+- **Method**: `POST`
+
+### Request Body Parameters as JSON
+```json
+{
+  "action":"unbridge",
+  "appid":"your_appid_here",
+  "callid":"f577605c-eb3a-4efe-af1b-ee66d5297569"
+}
+```
+- `appid` (string): the Agora project appid
+- `callid` (string): the call id of the connected call
+
+### Success Response Example
+```json
+{ "success":true }
+```
+
+### Error Code Responses
+404  Not Found (callid not active)
+
+### Notes
+Emits `agora_bridge_end` on success. The SIP leg remains active until you
+call [End Call](#endcall) or the remote party hangs up.
+
+## Re-bridge <a name="rebridge"></a>
+
+Move a connected call's Agora bridge to a *different* Agora channel
+**without dropping the SIP/PSTN leg**. Works identically for audio-only
+and audio+video calls (no audio gap on the SIP side). This is NOT the same
+as [Transfer](#transfer), which is a SIP REFER to an external phone number.
+
+- **URL**: `https://sipcm.agora.io/v1/api/pstn`
+- **Method**: `POST`
+
+### Request Body Parameters as JSON
+```json
+{
+  "action":"rebridge",
+  "appid":"your_appid_here",
+  "callid":"f577605c-eb3a-4efe-af1b-ee66d5297569",
+  "channel":"agora_new_channel",
+  "token":"<RTC token for the new channel>",
+  "uid":"123",
+  "current_channel":"agora_old_channel",
+  "current_uid":"123"
+}
+```
+- `appid` (string): the Agora project appid
+- `callid` (string): the call id of the connected call (inbound or outbound)
+- `channel` (string): destination Agora channel
+- `token` (string): RTC token for the destination channel. **Always
+  required** — there is no fallback to the appid here.
+- `uid` (string): Agora uid in the destination channel (may differ from
+  `current_uid`)
+- `current_channel` (string): the channel the call is currently bridged to.
+  The gateway validates this against live state and rejects mismatches.
+- `current_uid` (string): the uid the bridge is using now.
+- `sdk_options` (string) [optional]: JSON string of Agora SDK options
+- `audio_scenario` (string) [optional]: audio optimization mode
+- `webhook_url` (string) [optional]: your webhook endpoint for lifecycle events
+
+### Success Response Example
+```json
+{ "success":true }
+```
+
+### Failure Response Examples
+```json
+{ "success":false, "reason":"current channel/uid mismatch" }
+{ "success":false, "reason":"call not bridged; use bridge" }
+{ "success":false, "reason":"rebridge already in progress" }
+{ "success":false, "reason":"join failed: <detail>" }
+```
+On `join failed`, the gateway also emits an
+[`agora_bridge_failed`](#agora_bridge_failed) lifecycle event and the SIP
+leg stays up — you can retry the rebridge or call [End Call](#endcall).
+
+### Error Code Responses
+404  Not Found (callid not active)
+500  Missing required parameters
+
+### Notes
+- Works for **inbound and outbound** calls in all directions.
+- The SIP/PSTN leg is never torn down. `call_hangup` is **NOT** emitted on
+  rebridge success or destination-join failure.
+- Webhook event sequence on success:
+  1. `agora_bridge_end { rebridge:true, segment_billsec, ... }` — closes
+     the segment-1 CDR for the old channel.
+  2. `agora_bridge_start { rebridge:true, previous_channel, previous_uid, ... }`
+     — opens the segment-2 CDR for the new channel.
+  - Both carry the **same `callid`**. Per-segment billing is derived from
+    these labelled events.
+- Concurrency: the gateway serializes switches per call and rejects an
+  overlapping rebridge with `rebridge already in progress`.
+
+## Send DTMF <a name="senddtmf"></a>
+
+Send DTMF tones on the PSTN/SIP side of a connected call.
+
+- **URL**: `https://sipcm.agora.io/v1/api/pstn`
+- **Method**: `POST`
+
+### Request Body Parameters as JSON
+```json
+{
+  "action":"send_dtmf",
+  "appid":"your_appid_here",
+  "callid":"f577605c-eb3a-4efe-af1b-ee66d5297569",
+  "digits":"1234#"
+}
+```
+- `appid` (string): the Agora project appid
+- `callid` (string): the call id of the connected call
+- `digits` (string): the DTMF digit string to send (`0`-`9`, `*`, `#`)
+
+### Success Response Example
+```json
+{ "success":true }
+```
+
+### Notes
+Each digit fires a `dtmf_received` webhook event back on your `webhook_url`
+(echoed from the SIP side).
+
+## Transfer (SIP REFER) <a name="transfer"></a>
+
+Hand off a connected call's PSTN/SIP leg to a different external phone
+number (or SIP URI) via a SIP REFER. The Agora bridge ends; the remote
+PSTN/SIP party continues talking to the new destination. **This is NOT
+related to moving an Agora channel** — for that, use [Re-bridge](#rebridge).
+
+- **URL**: `https://sipcm.agora.io/v1/api/pstn`
+- **Method**: `POST`
+
+### Request Body Parameters as JSON
+```json
+{
+  "action":"transfer",
+  "appid":"your_appid_here",
+  "callid":"f577605c-eb3a-4efe-af1b-ee66d5297569",
+  "destination":"+18005551234",
+  "leg":"aleg"
+}
+```
+- `appid` (string): the Agora project appid
+- `callid` (string): the call id of the connected call
+- `destination` (string): phone number or SIP URI to refer the call to
+- `leg` (string) [optional]: `aleg` (default) or `bleg`
+
+### Success Response Example
+```json
+{ "success":true }
+```
+
+### Notes
+SIP REFER outcome is up to the upstream provider — success here means the
+REFER was accepted by the gateway, not that the new leg was answered.
+
 ## Webhook Events <a name="webhooks"></a>
 
 When you provide a `webhook_url` parameter (in outbound calls or PIN lookup responses), the SIP gateway will send HTTP POST requests to your endpoint with call lifecycle events.
@@ -415,16 +658,25 @@ These webhook events fire for any call regardless of how it was initiated (HTTP 
 | [`call_initiated`](#1-call_initiated) | API received the call request (outbound) or PIN lookup succeeded (inbound) | outbound, inbound |
 | [`call_ringing`](#2-call_ringing) | Remote party is ringing | outbound |
 | [`call_answered`](#3-call_answered) | Remote party answered (SIP-out adds `wav_file`) | outbound, outbound_sip |
-| [`agora_bridge_start`](#4-agora_bridge_start) | Audio bridge to Agora RTC established | outbound, inbound |
+| [`agora_bridge_start`](#4-agora_bridge_start) | Audio bridge to Agora RTC established (on re-bridge: includes `rebridge:true`, `previous_channel`, `previous_uid`) | outbound, inbound |
 | [`dtmf_received`](#dtmf_received) | DTMF digit detected on the PSTN leg, or echoed after `/send_dtmf` | outbound, inbound |
-| [`agora_bridge_end`](#5-agora_bridge_end) | Agora RTC session ended | outbound, inbound |
-| [`call_hangup`](#6-call_hangup) | Call ended (**guaranteed to fire**) | outbound, inbound, outbound_sip |
+| [`agora_bridge_end`](#5-agora_bridge_end) | Agora RTC session ended (on re-bridge: includes `rebridge:true`, `segment_billsec`) | outbound, inbound |
+| [`agora_bridge_failed`](#agora_bridge_failed) | Re-bridge destination-join failed; SIP leg stays up; `call_hangup` is NOT emitted | outbound, inbound |
+| [`call_hangup`](#6-call_hangup) | Call ended (**guaranteed to fire**; does NOT fire on re-bridge) | outbound, inbound, outbound_sip |
 
 **Outbound flow**: `call_initiated` → `call_ringing` → `call_answered` → `agora_bridge_start` → `agora_bridge_end` → `call_hangup`
 
 **Inbound flow**: `call_initiated` → `agora_bridge_start` → `agora_bridge_end` → `call_hangup`
 
 **SIP-out flow** (SIP-only outbound, `sip_outbound.lua`): `call_answered` → `call_hangup` only.
+
+**Re-bridge** (mid-call channel switch via [Re-bridge](#rebridge)): inserts
+a labelled segment-boundary pair into either flow:
+`agora_bridge_end{rebridge:true, segment_billsec}` (old channel) →
+`agora_bridge_start{rebridge:true, previous_channel, previous_uid}` (new
+channel). Same `callid` throughout. `call_hangup` is **not** emitted on
+re-bridge. On destination-join failure, `agora_bridge_failed` fires and
+the SIP leg stays up.
 
 `dtmf_received` is asynchronous — it can fire any time between `call_answered` / `agora_bridge_start` and `call_hangup`.
 
@@ -588,11 +840,19 @@ Sent after PIN lookup succeeds. First webhook event for inbound calls.
   "from": "benweekes",
   "direction": "inbound",
   "appid": "xyz789abc123",
-  "pin": "1234"
+  "pin": "1234",
+  "sip_headers": { "X-FHIRENC": "abc" }
 }
 ```
 
-**Additional field**: `pin` - The PIN that was entered by user
+**Additional fields**:
+- `pin` - The PIN that was entered by user
+- `sip_headers` (object) - **Inbound SIP only.** Custom `X-*` headers
+  captured on the inbound `INVITE`. String-valued, one value per name.
+  Empty object `{}` when no custom headers were on the wire. Absent for
+  inbound PSTN (DID) calls. Mirrors the field delivered in the
+  [Inbound Call Lookup](#calllookup) webhook body — same data, different
+  delivery point.
 
 #### 2. agora_bridge_start
 
@@ -683,6 +943,32 @@ Sent whenever a DTMF digit is detected on the PSTN/SIP leg of the call. Also fir
 ```
 
 **Additional field**: `digits` - The DTMF digit(s) detected. Typically a single character (`0`-`9`, `*`, `#`) per event.
+
+#### agora_bridge_failed
+
+Sent when a [Re-bridge](#rebridge) destination-join fails. The SIP leg is
+kept up; the call remains active and can be retried or ended. `call_hangup`
+is NOT emitted as a result of this failure.
+
+```json
+{
+  "event": "agora_bridge_failed",
+  "callid": "3636eaab-7dfe-4030-8b06-a7d0ff464360",
+  "timestamp": 1736953220,
+  "uid": "123",
+  "channel": "agora_new_channel",
+  "to": "+447712886300",
+  "from": "+441473943851",
+  "direction": "inbound",
+  "appid": "abc123def456",
+  "rebridge": true,
+  "reason": "join failed: invalid token"
+}
+```
+
+**Additional fields**:
+- `rebridge` - always `true` on this event.
+- `reason` - human-readable failure detail (e.g. invalid token, network error).
 
 ### SIP-only Outbound (`outbound_sip`)
 
