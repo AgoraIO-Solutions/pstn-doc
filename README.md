@@ -560,9 +560,13 @@ as [Transfer](#transfer), which is a SIP REFER to an external phone number.
 { "success":false, "reason":"rebridge already in progress" }
 { "success":false, "reason":"join failed: <detail>" }
 ```
-On `join failed`, the gateway also emits an
+On `join failed`, the gateway emits an
 [`agora_bridge_failed`](#agora_bridge_failed) lifecycle event and the SIP
-leg stays up — you can retry the rebridge or call [End Call](#endcall).
+leg stays up. **Recovery**: the failure is break-before-make — the call
+now has no active Agora bridge, so retrying `/rebridge` will fail with
+`call not bridged; use bridge`. Call [Bridge](#bridge) to establish a
+fresh Agora session on the same `callid`, or [End Call](#endcall) to
+hang up.
 
 ### Error Code Responses
 404  Not Found (callid not active)
@@ -947,8 +951,10 @@ Sent whenever a DTMF digit is detected on the PSTN/SIP leg of the call. Also fir
 #### agora_bridge_failed
 
 Sent when a [Re-bridge](#rebridge) destination-join fails. The SIP leg is
-kept up; the call remains active and can be retried or ended. `call_hangup`
-is NOT emitted as a result of this failure.
+kept up; the call remains active. `call_hangup` is NOT emitted as a result
+of this failure. **The call has no active Agora bridge at this point**
+(re-bridge is break-before-make) — recover with [Bridge](#bridge) to open
+a new Agora session on the same `callid`, or [End Call](#endcall).
 
 ```json
 {
