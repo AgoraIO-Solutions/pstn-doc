@@ -289,8 +289,9 @@ When provisioned, the gateway calls your REST endpoint when an inbound call arri
 
   Header values come from arbitrary SIP peers and should be treated as
   **untrusted user input** (SQL/HTML/log-injection considerations on your
-  side). Size-bounded by the gateway: ≤20 names, ≤1024 bytes per value,
-  ≤4 KB serialized total.
+  side). Size-bounded: ≤20 names, ≤1024 bytes per value, ≤4 KB serialized
+  total. Header names prefixed `X-Agora-` are reserved for Agora internal use
+  and are never surfaced.
 
 ### Success Response Example (from your endpoint)
 *Status Code*: `200 OK`
