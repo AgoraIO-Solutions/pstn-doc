@@ -269,7 +269,7 @@ When provisioned, the gateway calls your REST endpoint when an inbound call arri
   "pin":"334455",
   "callerid":"1765740333",
   "callid":"f577605c-eb3a-4efe-af1b-ee66d5297569",
-  "sip_headers":{ "X-FHIRENC":"abc", "X-Trace-Id":"xyz" }
+  "sip_headers":{ "X-Session-Id":"abc", "X-Trace-Id":"xyz" }
 }
 ```
 - `did`: the phone number dialed
@@ -845,7 +845,7 @@ Sent after PIN lookup succeeds. First webhook event for inbound calls.
   "direction": "inbound",
   "appid": "xyz789abc123",
   "pin": "1234",
-  "sip_headers": { "X-FHIRENC": "abc" }
+  "sip_headers": { "X-Session-Id": "abc" }
 }
 ```
 
