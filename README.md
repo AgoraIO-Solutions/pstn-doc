@@ -146,7 +146,7 @@ In this scenario, the end-user receives a phone call which connects them directl
   - `srtp=true` — enable SRTP media encryption
 
   Example: `"trunk.provider.com:5061;transport=tls;username=+15551234567;password=your_password_here;srtp=true"`
-- `sip_domain` (string) [optional]: force the call to route through a specific Agora gateway by domain name. The gateway must be configured and available. When provided, the gateway also uses this domain in the SIP From header, which is required by some providers (e.g., WhatsApp/Meta). Returns `400` if the domain is not configured, `503` if the gateway is disabled or at capacity.
+- `sip_domain` (string) [optional]: the domain the gateway uses in the SIP `From` header, which is required by some providers (e.g., WhatsApp/Meta). This does **not** affect gateway selection — the call always routes through an available gateway in the requested `region`.
 - `timeout` (string) [optional]: max duration for outbound call in seconds. Default 3600 seconds which is 1 hour
 - `webhook_url` (string) [optional]: your webhook endpoint to receive call lifecycle events (see [Webhook Events](#webhooks))
 - `sdk_options` (string) [optional]: JSON string of Agora SDK options (e.g., `{"rtc.client_type":"71"}`)
