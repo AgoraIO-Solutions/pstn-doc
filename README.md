@@ -262,6 +262,8 @@ When provisioned, the gateway calls your REST endpoint when an inbound call arri
 - **URL**: `https://example.customer.com/api/pinlookup` *(your endpoint)*
 - **Method**: `POST`
 
+**Example implementation:** [`token_gen.py`](https://github.com/BenWeekes/agora-rtc-lambda/blob/main/token_gen.py) — an AWS Lambda that implements this webhook end to end: it receives the gateway's POST below and responds with an RTC token and channel. To route inbound calls to a Conversational AI agent instead, see [ConvoAI](convoAI.md).
+
 ### Request Body Parameters as JSON (sent by Agora to your endpoint)
 ```json
 {
