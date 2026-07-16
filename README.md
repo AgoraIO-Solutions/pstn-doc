@@ -18,6 +18,8 @@
 15. [Agora Gateway IPs](#gatewayips)
 16. [Twilio Configuration](#configtwilio)
 
+**Example code:** [Inbound Call Lookup Lambda](CALL-LOOKUP-LAMBDA.md) · [PSTN to ConvoAI](convoAI.md) · [Telephony Go SDK](TELEPHONY-GO.md)
+
 ## Overview <a name="overview"></a>
 These REST APIs allow developers to trigger inbound and outbound PSTN and SIP calls which then connect into an Agora channel enabling end-users to participate with their phone for the audio leg of the conference call.
 
@@ -262,7 +264,12 @@ When provisioned, the gateway calls your REST endpoint when an inbound call arri
 - **URL**: `https://example.customer.com/api/pinlookup` *(your endpoint)*
 - **Method**: `POST`
 
-**Example implementation:** [`token_gen.py`](https://github.com/BenWeekes/agora-rtc-lambda/blob/main/token_gen.py) — an AWS Lambda that implements this webhook end to end: it receives the gateway's POST below and responds with an RTC token and channel. To route inbound calls to a Conversational AI agent instead, see [ConvoAI](convoAI.md).
+**Example implementations** — ready-to-deploy AWS Lambdas that implement this webhook:
+
+| Example | Use when |
+|---------|----------|
+| [Inbound Call Lookup Lambda](CALL-LOOKUP-LAMBDA.md) — [`lambda/token_gen.py`](lambda/token_gen.py) | You want the caller connected to a regular Agora RTC channel |
+| [PSTN to ConvoAI](convoAI.md) — [`lambda/convoai_pstn.py`](lambda/convoai_pstn.py) | You want the caller connected to a Conversational AI agent, configured per PIN |
 
 ### Request Body Parameters as JSON (sent by Agora to your endpoint)
 ```json
