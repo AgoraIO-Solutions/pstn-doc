@@ -263,6 +263,19 @@ When provisioned, the gateway calls your REST endpoint when an inbound call arri
 
 - **URL**: `https://example.customer.com/api/pinlookup` *(your endpoint)*
 - **Method**: `POST`
+- **Authorization**: optional — see [Securing your endpoint](#securing-your-endpoint)
+
+### Securing your endpoint
+
+Your lookup endpoint is publicly reachable, so you should authenticate the requests it receives.
+
+Provide an authorization value when your number is provisioned, and Agora will send it as the `Authorization` header on every lookup request:
+
+```
+Authorization: Bearer <your-secret>
+```
+
+The value is sent exactly as supplied, so include the scheme (`Bearer `, `Basic `, …) if your endpoint expects one. Validate it on every request and reject anything unauthenticated — returning `404` rejects the inbound call.
 
 **Example implementations** — ready-to-deploy AWS Lambdas that implement this webhook:
 
