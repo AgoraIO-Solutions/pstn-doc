@@ -255,6 +255,8 @@ Body:
 ### Notes
 Using this API you can bridge an outbound call from your provider with an inbound sip address into Agora.
 
+A call to an unknown, expired or cancelled SIP address is rejected with SIP `403 Forbidden` without being answered.
+
 ## Inbound Call Lookup <a name="calllookup"></a>
 
 When provisioned, the gateway calls your REST endpoint when an inbound call arrives, providing the DID dialed, PIN entered (if configured), and caller ID. Your endpoint returns the Agora channel details to connect the caller to.
@@ -344,6 +346,17 @@ Body:
 
 ### Error Code Responses
 404  Not Found
+
+### Call answer timing
+The gateway does not answer an inbound call while your endpoint decides. The caller hears ringing (SIP `180 Ringing`) until your endpoint responds, and the call is answered only after a successful response, so a rejected call is never answered.
+
+| Your endpoint | Caller receives |
+|---------------|-----------------|
+| `200 OK` with `token`, `uid` and `channel` | call answered and bridged into the channel |
+| `404`, any other error, a body without `token`/`uid`/`channel`, or a connection failure | SIP `403 Forbidden`, call not answered |
+| no response within **8 seconds** | SIP `480 Temporarily Unavailable`, call not answered |
+
+Respond well within the 8-second limit. Exceptions: numbers configured for PIN prompts are answered first so the caller can hear the prompt and enter the PIN (the lookup runs after the PIN is entered), and inbound SIP `direct_` numbers do not use this webhook.
 
 ### Notes
 This webhook allows dynamic call routing to Agora channels. Your DID can be configured to prompt for PIN entry or route directly based on DID/caller ID. Return 404 to reject the call.

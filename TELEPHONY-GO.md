@@ -23,7 +23,7 @@ go get github.com/AgoraIO-Solutions/telephony-go
 ## Features
 
 - Outbound calls (Dial, Hangup)
-- Inbound call handling (Subscribe, Accept, Reject)
+- Inbound call handling (Subscribe, Accept, Reject). The caller hears ringing until a subscribed client accepts; the call is answered only on Accept. Reject, or no client response within 30 seconds, returns SIP `403 Forbidden` to the caller without answering
 - DTMF send and receive
 - Call bridge/unbridge (connect/disconnect Agora RTC channels)
 - Call transfer
