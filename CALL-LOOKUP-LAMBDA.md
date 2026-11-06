@@ -56,4 +56,5 @@ See [Inbound Call Lookup](README.md#calllookup) for the full request/response co
 
 - **Channel naming** — this example generates a random 10-character channel per call. In production you'll usually derive the channel from the `did`, `pin`, or `callerid` so the caller lands in the channel your app expects.
 - **Rejecting a call** — return HTTP `404` to reject the inbound call.
+- **Response time** — respond within 8 seconds, including any Lambda cold start. A slower lookup fails: see [Call answer timing](README.md#call-answer-timing).
 - **Token expiry** — tokens are generated with a 24-hour lifetime.

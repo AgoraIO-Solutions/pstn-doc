@@ -1,6 +1,6 @@
 # PSTN to Agora ConvoAI
 
-When an inbound phone number is dialled, the Agora PSTN gateway will prompt the user for a variable length PIN followed by the # key.  
+When an inbound phone number configured for PIN prompts is dialled, the Agora PSTN gateway will prompt the user for a variable length PIN (2 to 10 digits) followed by the # key.  
 The PSTN gateway can then call a URL to find out what Agora RTC channel the phone should be connected to and to trigger sending a convoAI agent into the same channel.     
 
 The python code in [`lambda/convoai_pstn.py`](lambda/convoai_pstn.py) can be copied to a lambda function and configured in your AWS account as shown in this demo video: 
@@ -11,9 +11,11 @@ If you only need to connect inbound callers to a regular Agora RTC channel (no A
 The environment variables below can be set in your lambda function to configure the agent behavior per pin.     
 The lambda function URL can then be provided to Agora PSTN admin to be assigned to your inbound phone number.            
 
+The lookup must answer within 8 seconds (see [Call answer timing](README.md#call-answer-timing)). This function answers only after it has started the agent, so a slower agent start fails the lookup, even though the agent may join the channel. It also returns no `appid`, so API call control such as [End Call](README.md#endcall) will not find these calls; add `appid` to the response if you need that.
+
 ## Environment Variables
 
-The function uses PIN-based environment variable lookup. For each variable, it first checks for `VARIABLE_NAME_{PIN}`, then falls back to `VARIABLE_NAME`.
+The function uses PIN-based environment variable lookup. For each variable, it first checks for `VARIABLE_NAME_{PIN}`, then falls back to `VARIABLE_NAME`. Numbers not configured for PIN prompts send PIN `0000`, which uses `VARIABLE_NAME` directly.
 
 ### Mandatory Variables
 - **`APP_ID`** - Agora App ID
