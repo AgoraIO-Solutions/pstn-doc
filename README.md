@@ -18,7 +18,7 @@
 15. [Agora Gateway IPs](#gatewayips)
 16. [Twilio Configuration](#configtwilio)
 
-**Example code:** [Inbound Call Lookup Lambda](CALL-LOOKUP-LAMBDA.md) · [PSTN to ConvoAI](convoAI.md) · [Telephony Go SDK](TELEPHONY-GO.md)
+**Example code:** [Inbound Call Lookup Lambda](CALL-LOOKUP-LAMBDA.md) · [PSTN to ConvoAI](convoAI.md) · [Telephony Go SDK](TELEPHONY-GO.md) · [Video SIP calls: match the SIP side's codecs in the browser](WEB-CODEC-MATCHING.md)
 
 ## Overview <a name="overview"></a>
 These REST APIs allow developers to trigger inbound and outbound PSTN and SIP calls which then connect into an Agora channel enabling end-users to participate with their phone for the audio leg of the conference call.
@@ -1157,6 +1157,8 @@ Your webhook endpoint should:
 
 **Transport**: TLS
      `sip.as.lb.01.agora.io:5091;transport=tls`
+
+On video entrypoints the gateway passes video and audio through, so the browser must publish the SIP client's codecs: see [Video SIP calls: match the SIP side's codecs](WEB-CODEC-MATCHING.md).
 
 **Media Encryption**: SRTP (SDES) Optional
 **Recommended**: TLS transport for secure signaling

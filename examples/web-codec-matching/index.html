@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Agora SIP video: match the SIP side's codecs</title>
+<!-- Agora Web SDK 4.x. Pin the version you have tested. -->
+<script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.24.9.js"></script>
+<style>
+  body { font: 14px system-ui, sans-serif; margin: 16px; }
+  label { margin-right: 12px; }
+  input { width: 260px; }
+  #videos { display: flex; gap: 8px; margin-top: 12px; }
+  #videos > div { width: 320px; height: 240px; background: #222; }
+  #log { margin-top: 12px; font: 12px monospace; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<h3>Join a channel, then let a SIP video client dial into it</h3>
+<label>App ID <input id="appid"></label>
+<label>Channel <input id="channel"></label><br>
+<label>Token <input id="token" placeholder="RTC token from your token server (empty if none)"></label>
+<label>UID <input id="uid" value="1001"></label><br>
+<button id="join">Join</button> <button id="leave" disabled>Leave</button>
+<div id="videos"><div id="local"></div><div id="remote"></div></div>
+<div id="log"></div>
+
+<script>
+'use strict';
+// Video SIP calls pass media through without transcoding, so the browser must publish
+// the video and audio codecs the SIP client negotiated. The Web SDK fixes both codecs
+// when the client is created, so a change of codec is: leave, create a client with the
+// new codecs, join again with the same uid, publish the same tracks.
+
+const VIDEO = { H264: 'h264', VP8: 'vp8', AV1: 'av1', AV1X: 'av1' };   // SDK codecType -> createClient codec
+const AUDIO = ['opus', 'pcmu', 'pcma', 'g722'];                         // createClient audioCodec values
+const MAX_SWITCHES = 4;      // two remotes with different codecs must not make the page flap
+
+const $ = (id) => document.getElementById(id);
+const log = (m) => { $('log').textContent += new Date().toISOString().slice(11, 19) + ' ' + m + '\n'; };
+const st = { client: null, codec: 'h264', acodec: 'opus', mic: null, cam: null, switching: false, switches: 0, want: {} };
+
+// Your own server issues tokens; never put the App Certificate in a web page.
+async function getToken() { return $('token').value.trim() || null; }
+
+async function connect(codec, acodec) {
+  const client = AgoraRTC.createClient({ mode: 'rtc', codec, audioCodec: acodec });
+  st.client = client; st.codec = codec; st.acodec = acodec;
+  client.on('user-published', onPublished);
+  client.on('user-unpublished', (user, kind) => log(`remote ${user.uid} unpublished ${kind}`));
+  await client.join($('appid').value.trim(), $('channel').value.trim(), await getToken(), Number($('uid').value));
+  await client.publish([st.mic, st.cam]);
+  log(`joined, publishing ${codec.toUpperCase()} video and ${acodec.toUpperCase()} audio`);
+}
+
+async function onPublished(user, kind) {
+  const client = st.client;
+  await client.subscribe(user, kind);
+  if (kind === 'video') user.videoTrack.play('remote');
+  else user.audioTrack.play();
+  // The codec shows up in the stats within about a second of the first packets.
+  for (let i = 0; i < 40 && st.client === client; i++) {
+    const s = kind === 'video' ? client.getRemoteVideoStats()[user.uid] : client.getRemoteAudioStats()[user.uid];
+    const type = s && s.codecType;
+    if (type) {
+      const want = kind === 'video' ? VIDEO[String(type).toUpperCase()] : String(type).toLowerCase();
+      log(`remote ${user.uid} sends ${String(type).toUpperCase()} ${kind}`);
+      if (kind === 'video' && want) st.want.video = want;
+      if (kind === 'audio' && AUDIO.includes(want)) st.want.audio = want;
+      // One re-join covers both kinds when both are known to differ.
+      const codec = st.want.video || st.codec, acodec = st.want.audio || st.acodec;
+      if (codec !== st.codec || acodec !== st.acodec) await rejoin(codec, acodec);
+      return;
+    }
+    await new Promise((r) => setTimeout(r, 250));
+  }
+}
+
+async function rejoin(codec, acodec) {
+  if (st.switching || st.switches >= MAX_SWITCHES) return;
+  st.switching = true; st.switches++;
+  log(`switching to ${codec.toUpperCase()} / ${acodec.toUpperCase()} to match the SIP side`);
+  try {
+    const old = st.client; st.client = null;
+    await old.leave();                 // the tracks stay open and are published again
+    await connect(codec, acodec);      // fetches a fresh token: the old one may have expired
+  } finally { st.switching = false; }
+}
+
+$('join').onclick = async () => {
+  $('join').disabled = true;
+  try {
+    st.mic = await AgoraRTC.createMicrophoneAudioTrack();
+    st.cam = await AgoraRTC.createCameraVideoTrack({ encoderConfig: '480p_1' });
+    st.cam.play('local');
+    st.switches = 0; st.want = {};
+    await connect('h264', 'opus');
+    $('leave').disabled = false;
+  } catch (e) { log('join failed: ' + e.message); $('join').disabled = false; }
+};
+
+$('leave').onclick = async () => {
+  if (st.client) await st.client.leave();
+  st.client = null;
+  for (const t of [st.mic, st.cam]) if (t) { t.stop(); t.close(); }
+  $('leave').disabled = true; $('join').disabled = false;
+  log('left');
+};
+</script>
+</body>
+</html>
