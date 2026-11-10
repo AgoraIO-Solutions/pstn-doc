@@ -1101,6 +1101,11 @@ Your webhook endpoint should:
 
 ## SIP Entrypoints <a name="sipentry"></a>
 
+Each region has two pairs of ports:
+
+- **Voice (5080, 5081):** audio only. The gateway transcodes the audio between your SIP codec and Agora. A video offer on these ports is answered with audio only.
+- **Video + Voice (5090, 5091):** video calls, and voice-only calls too. Audio and video pass through without transcoding when the Agora side uses the same codecs (see [WEB-CODEC-MATCHING.md](WEB-CODEC-MATCHING.md)).
+
 ### Europe
 **Region**: Europe
 
