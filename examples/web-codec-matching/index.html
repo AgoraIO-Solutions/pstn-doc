@@ -41,7 +41,7 @@ const MAX_SWITCHES = 4;      // two remotes with different codecs must not make 
 
 const $ = (id) => document.getElementById(id);
 const log = (m) => { $('log').textContent += new Date().toISOString().slice(11, 19) + ' ' + m + '\n'; };
-const st = { client: null, codec: 'h264', acodec: 'opus', mic: null, cam: null, switching: false, switches: 0, remotes: new Map() };
+const st = { client: null, codec: 'h264', acodec: 'opus', mic: null, cam: null, switches: 0, remotes: new Map(), session: 0 };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // Your own server issues tokens; never put the App Certificate in a web page.
@@ -80,29 +80,34 @@ async function onPublished(client, user, kind) {
 
 // One switch for both codecs. A SIP caller's audio arrives about a second before its video:
 // after the audio codec, wait up to 3 s for a video (voice-only callers just switch later).
+// Each watcher calls this when it learns its codec; one decides at a time, and a video that
+// arrives after a decision is decided again. A replaced client's decision just stops.
 async function decide(client, user, r) {
-  if (st.switching || r.deciding) return;   // the other kind's watcher is already deciding
+  if (r.deciding) return;              // the other kind's watcher is deciding and will see this codec
   r.deciding = true;
-  for (let t = 0; t < 3000 && st.client === client; t += 250) {
-    const videoPending = user.hasVideo ? !r.video : true;
-    const audioPending = user.hasAudio && !r.audio;
-    if (!videoPending && !audioPending) break;
-    await sleep(250);
-  }
-  if (st.client !== client) return;
-  const codec = r.video || st.codec, acodec = r.audio || st.acodec;
-  if ((codec !== st.codec || acodec !== st.acodec) && st.switches < MAX_SWITCHES) return rejoin(codec, acodec);
-  if (user.hasVideo && user.videoTrack) user.videoTrack.play('remote');   // codecs match: render once
+  try {
+    for (let t = 0; t < 3000 && st.client === client; t += 250) {
+      const videoPending = user.hasVideo ? !r.video : true;
+      const audioPending = user.hasAudio && !r.audio;
+      if (!videoPending && !audioPending) break;
+      await sleep(250);
+    }
+    if (st.client !== client) return;
+    const codec = r.video || st.codec, acodec = r.audio || st.acodec;
+    if ((codec !== st.codec || acodec !== st.acodec) && st.switches < MAX_SWITCHES) return await rejoin(codec, acodec);
+    if (user.hasVideo && user.videoTrack) user.videoTrack.play('remote');   // match, or no more switches: render once
+  } finally { r.deciding = false; }
 }
 
 async function rejoin(codec, acodec) {
-  st.switching = true; st.switches++;
+  const session = st.session;
+  st.switches++;
   log(`switching to ${codec.toUpperCase()} / ${acodec.toUpperCase()} to match the SIP side (one re-join)`);
-  try {
-    const old = st.client; st.client = null; st.remotes.clear();
-    await old.leave();                 // the tracks stay open and are published again
-    await connect(codec, acodec);      // fetches a fresh token: the old one may have expired
-  } finally { st.switching = false; }
+  const old = st.client; st.client = null; st.remotes.clear();
+  await old.leave();                   // the tracks stay open and are published again
+  if (st.session !== session) return;  // Leave pressed meanwhile
+  await connect(codec, acodec);        // fetches a fresh token: the old one may have expired
+  if (st.session !== session && st.client) { const c = st.client; st.client = null; await c.leave(); }
 }
 
 $('join').onclick = async () => {
@@ -118,6 +123,7 @@ $('join').onclick = async () => {
 };
 
 $('leave').onclick = async () => {
+  st.session++;                        // cancels a switch in flight
   const c = st.client; st.client = null;
   if (c) await c.leave();
   for (const t of [st.mic, st.cam]) if (t) { t.stop(); t.close(); }

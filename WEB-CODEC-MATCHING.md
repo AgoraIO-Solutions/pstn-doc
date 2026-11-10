@@ -60,29 +60,29 @@ async function onPublished(client, user, kind) {
     }
     await new Promise((res) => setTimeout(res, 250));
   }
+  if (kind === 'video' && st.client === client) user.videoTrack.play('remote');   // codec never known
 }
 
 async function decide(client, user, r) {                       // one switch for both codecs
-  if (st.switching || r.deciding) return;
+  if (r.deciding) return;                                      // the other watcher sees this codec
   r.deciding = true;
-  for (let t = 0; t < 3000 && st.client === client; t += 250) {
-    if ((user.hasVideo ? r.video : false) && (!user.hasAudio || r.audio)) break;
-    await new Promise((res) => setTimeout(res, 250));
-  }
-  if (st.client !== client) return;
-  const codec = r.video || st.codec, acodec = r.audio || st.acodec;
-  if (codec !== st.codec || acodec !== st.acodec) return rejoin(codec, acodec);
-  if (user.hasVideo) user.videoTrack.play('remote');           // codecs match: render once
+  try {
+    for (let t = 0; t < 3000 && st.client === client; t += 250) {
+      if ((user.hasVideo ? r.video : false) && (!user.hasAudio || r.audio)) break;
+      await new Promise((res) => setTimeout(res, 250));
+    }
+    if (st.client !== client) return;                          // replaced: the new client decides
+    const codec = r.video || st.codec, acodec = r.audio || st.acodec;
+    if ((codec !== st.codec || acodec !== st.acodec) && st.switches < 4) return await rejoin(codec, acodec);
+    if (user.hasVideo) user.videoTrack.play('remote');         // match (or no more switches): render once
+  } finally { r.deciding = false; }
 }
 
 async function rejoin(codec, acodec) {
-  if (st.switches >= 4) return;
-  st.switching = true; st.switches++;
-  try {
-    const old = st.client; st.client = null; st.remotes.clear();
-    await old.leave();                // tracks stay open
-    await connect(codec, acodec);
-  } finally { st.switching = false; }
+  const session = st.session; st.switches++;                   // Leave does st.session++
+  const old = st.client; st.client = null; st.remotes.clear();
+  await old.leave();                                           // tracks stay open
+  if (st.session === session) await connect(codec, acodec);
 }
 ```
 
