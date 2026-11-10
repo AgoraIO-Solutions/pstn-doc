@@ -12,8 +12,14 @@ audio, hears nothing).
 | Voice-only call on a video entrypoint | the SIP client's audio codec |
 | Call on a voice entrypoint (5080, 5081) | nothing special: the gateway transcodes the audio and publishes Opus; no video |
 
-The SIP client chooses its codecs, so the browser cannot know them in advance. The sample
-below finds them from the first packets it receives and switches to them.
+The SIP client chooses its codecs. Two ways to match them:
+
+- **Before joining:** your [Inbound Call Lookup](README.md#calllookup) endpoint receives
+  `audio_codec` and `video_codec`, the codecs the call will use. Hand them to the web client and
+  create it with them (`AgoraRTC.createClient({ codec, audioCodec })`): it joins with matching
+  codecs and never switches.
+- **After joining:** when the browser is already in the channel, the sample below finds the
+  codecs from the first packets it receives and switches to them once.
 
 ## How it works
 

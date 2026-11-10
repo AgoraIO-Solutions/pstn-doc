@@ -297,7 +297,12 @@ The value is sent exactly as supplied, so include the scheme (`Bearer `, `Basic 
   "pin":"334455",
   "callerid":"1765740333",
   "callid":"f577605c-eb3a-4efe-af1b-ee66d5297569",
-  "sip_headers":{ "X-Session-Id":"abc", "X-Trace-Id":"xyz" }
+  "sip_headers":{ "X-Session-Id":"abc", "X-Trace-Id":"xyz" },
+  "video":true,
+  "audio_codecs":["PCMU","OPUS"],
+  "video_codecs":["H264","VP8"],
+  "audio_codec":"PCMU",
+  "video_codec":"H264"
 }
 ```
 - `did`: the phone number dialed
@@ -321,6 +326,15 @@ The value is sent exactly as supplied, so include the scheme (`Bearer `, `Basic 
   side). Size-bounded: ≤20 names, ≤1024 bytes per value, ≤4 KB serialized
   total. Header names prefixed `X-Agora-` are reserved for Agora internal use
   and are never surfaced.
+- `video` (boolean): `true` when the call arrived on a video entrypoint (5090, 5091), so it may
+  carry video; `false` on the voice entrypoints (5080, 5081), which take audio only.
+- `audio_codecs`, `video_codecs` (arrays of strings): the codecs the caller offered, in its order
+  of preference (for example `OPUS`, `PCMU`, `PCMA`, `G722`; `H264`, `VP8`, `AV1`). `video_codecs`
+  is empty on the voice entrypoints and when the caller offered no video.
+- `audio_codec`, `video_codec` (strings): the codecs the call will use, empty when none. On the
+  video entrypoints media passes through, so a web client in the channel should publish these:
+  create it with them and it joins with matching codecs at once (see
+  [WEB-CODEC-MATCHING.md](WEB-CODEC-MATCHING.md)).
 
 ### Success Response Example (from your endpoint)
 *Status Code*: `200 OK`
@@ -347,7 +361,9 @@ Body:
 - `audio_scenario` (string) [optional]: Audio optimization mode. Values:
   - "0": Automatic Human Conferencing Scenarios (default)
   - "10": Optimized To Talk to AI Agents
-- `video` (boolean) [optional]: Video is set by the SIP port the call arrives on, not by this field (see [SIP Entrypoints](#sipentry)). Default: `false`
+- `video` (boolean) [optional]: `false` makes the destination voice only: a call with video is
+  refused with SIP `488 Video Not Accepted`, so the caller can call again without video. Leave it
+  out to accept video when the call arrived on a video entrypoint (see [SIP Entrypoints](#sipentry)).
 
 ### Error Code Responses
 404  Not Found
@@ -360,6 +376,7 @@ The gateway does not answer an inbound call while your endpoint decides. The cal
 | `200 OK` with `token`, `uid` and `channel` | call answered and bridged into the channel |
 | `404`, any other error, a body without `token`/`uid`/`channel`, or a connection failure | SIP `403 Forbidden`, call not answered |
 | no response within **8 seconds** | SIP `480 Temporarily Unavailable`, call not answered |
+| `200 OK` with `"video": false`, on a call with video | SIP `488 Video Not Accepted`, call not answered (unlike `403`, the destination exists: call again without video) |
 
 Respond well within the 8-second limit. Exceptions: numbers configured for PIN prompts are answered first so the caller can hear the prompt and enter the PIN (the lookup runs after the PIN is entered; a failed lookup replays the prompt, up to three attempts, then plays a goodbye message instead of a SIP error), and inbound SIP `direct_` numbers do not use this webhook.
 
