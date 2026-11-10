@@ -28,10 +28,12 @@
 
 <script>
 'use strict';
-// Video SIP calls pass media through without transcoding, so the browser must publish
-// the video and audio codecs the SIP client negotiated. The Web SDK fixes both codecs
-// when the client is created, so a change of codec is: leave, create a client with the
+// SIP calls on the video entrypoints pass media through without transcoding, so the browser
+// must publish the video and audio codecs the SIP client negotiated. The Web SDK fixes both
+// codecs when the client is created, so a change of codec is: leave, create a client with the
 // new codecs, join again with the same uid, publish the same tracks.
+// To keep it to one re-join and one picture: learn BOTH codecs first, switch once, and render
+// the remote video only when its codecs match ours.
 
 const VIDEO = { H264: 'h264', VP8: 'vp8', AV1: 'av1', AV1X: 'av1' };   // SDK codecType -> createClient codec
 const AUDIO = ['opus', 'pcmu', 'pcma', 'g722'];                         // createClient audioCodec values
@@ -39,7 +41,8 @@ const MAX_SWITCHES = 4;      // two remotes with different codecs must not make 
 
 const $ = (id) => document.getElementById(id);
 const log = (m) => { $('log').textContent += new Date().toISOString().slice(11, 19) + ' ' + m + '\n'; };
-const st = { client: null, codec: 'h264', acodec: 'opus', mic: null, cam: null, switching: false, switches: 0, want: {} };
+const st = { client: null, codec: 'h264', acodec: 'opus', mic: null, cam: null, switching: false, switches: 0, remotes: new Map() };
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // Your own server issues tokens; never put the App Certificate in a web page.
 async function getToken() { return $('token').value.trim() || null; }
@@ -47,42 +50,56 @@ async function getToken() { return $('token').value.trim() || null; }
 async function connect(codec, acodec) {
   const client = AgoraRTC.createClient({ mode: 'rtc', codec, audioCodec: acodec });
   st.client = client; st.codec = codec; st.acodec = acodec;
-  client.on('user-published', onPublished);
-  client.on('user-unpublished', (user, kind) => log(`remote ${user.uid} unpublished ${kind}`));
+  // A client replaced by a switch still fires events: ignore them.
+  client.on('user-published', (user, kind) => { if (st.client === client) onPublished(client, user, kind); });
+  client.on('user-unpublished', (user, kind) => { if (st.client === client) log(`remote ${user.uid} unpublished ${kind}`); });
   await client.join($('appid').value.trim(), $('channel').value.trim(), await getToken(), Number($('uid').value));
   await client.publish([st.mic, st.cam]);
   log(`joined, publishing ${codec.toUpperCase()} video and ${acodec.toUpperCase()} audio`);
 }
 
-async function onPublished(user, kind) {
-  const client = st.client;
+async function onPublished(client, user, kind) {
   await client.subscribe(user, kind);
-  if (kind === 'video') user.videoTrack.play('remote');
-  else user.audioTrack.play();
+  if (st.client !== client) return;                // replaced while subscribing
+  const r = st.remotes.get(user.uid) || { video: null, audio: null };
+  st.remotes.set(user.uid, r);
+  if (kind === 'audio') user.audioTrack.play();     // audio plays at once; video waits for the codecs
   // The codec shows up in the stats within about a second of the first packets.
   for (let i = 0; i < 40 && st.client === client; i++) {
     const s = kind === 'video' ? client.getRemoteVideoStats()[user.uid] : client.getRemoteAudioStats()[user.uid];
-    const type = s && s.codecType;
+    const type = s && s.codecType && String(s.codecType);
     if (type) {
-      const want = kind === 'video' ? VIDEO[String(type).toUpperCase()] : String(type).toLowerCase();
-      log(`remote ${user.uid} sends ${String(type).toUpperCase()} ${kind}`);
-      if (kind === 'video' && want) st.want.video = want;
-      if (kind === 'audio' && AUDIO.includes(want)) st.want.audio = want;
-      // One re-join covers both kinds when both are known to differ.
-      const codec = st.want.video || st.codec, acodec = st.want.audio || st.acodec;
-      if (codec !== st.codec || acodec !== st.acodec) await rejoin(codec, acodec);
-      return;
+      r[kind] = kind === 'video' ? VIDEO[type.toUpperCase()] : (AUDIO.includes(type.toLowerCase()) ? type.toLowerCase() : null);
+      log(`remote ${user.uid} sends ${type.toUpperCase()} ${kind}`);
+      return decide(client, user, r);
     }
-    await new Promise((r) => setTimeout(r, 250));
+    await sleep(250);
   }
+  if (kind === 'video') user.videoTrack.play('remote');   // codec never known: show it anyway
+}
+
+// One switch for both codecs. A SIP caller's audio arrives about a second before its video:
+// after the audio codec, wait up to 3 s for a video (voice-only callers just switch later).
+async function decide(client, user, r) {
+  if (st.switching || r.deciding) return;   // the other kind's watcher is already deciding
+  r.deciding = true;
+  for (let t = 0; t < 3000 && st.client === client; t += 250) {
+    const videoPending = user.hasVideo ? !r.video : true;
+    const audioPending = user.hasAudio && !r.audio;
+    if (!videoPending && !audioPending) break;
+    await sleep(250);
+  }
+  if (st.client !== client) return;
+  const codec = r.video || st.codec, acodec = r.audio || st.acodec;
+  if ((codec !== st.codec || acodec !== st.acodec) && st.switches < MAX_SWITCHES) return rejoin(codec, acodec);
+  if (user.hasVideo && user.videoTrack) user.videoTrack.play('remote');   // codecs match: render once
 }
 
 async function rejoin(codec, acodec) {
-  if (st.switching || st.switches >= MAX_SWITCHES) return;
   st.switching = true; st.switches++;
-  log(`switching to ${codec.toUpperCase()} / ${acodec.toUpperCase()} to match the SIP side`);
+  log(`switching to ${codec.toUpperCase()} / ${acodec.toUpperCase()} to match the SIP side (one re-join)`);
   try {
-    const old = st.client; st.client = null;
+    const old = st.client; st.client = null; st.remotes.clear();
     await old.leave();                 // the tracks stay open and are published again
     await connect(codec, acodec);      // fetches a fresh token: the old one may have expired
   } finally { st.switching = false; }
@@ -94,15 +111,15 @@ $('join').onclick = async () => {
     st.mic = await AgoraRTC.createMicrophoneAudioTrack();
     st.cam = await AgoraRTC.createCameraVideoTrack({ encoderConfig: '480p_1' });
     st.cam.play('local');
-    st.switches = 0; st.want = {};
+    st.switches = 0; st.remotes.clear();
     await connect('h264', 'opus');
     $('leave').disabled = false;
   } catch (e) { log('join failed: ' + e.message); $('join').disabled = false; }
 };
 
 $('leave').onclick = async () => {
-  if (st.client) await st.client.leave();
-  st.client = null;
+  const c = st.client; st.client = null;
+  if (c) await c.leave();
   for (const t of [st.mic, st.cam]) if (t) { t.stop(); t.close(); }
   $('leave').disabled = true; $('join').disabled = false;
   log('left');
