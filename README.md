@@ -196,6 +196,7 @@ Body:
 ### Error Code Responses
 401  Unauthorized
 500  Missing Parameters, or no result from the gateway (`"msg":"action failed"`)
+429  Call rate limit reached: too many new calls in this second or minute. The `Retry-After` header (and `retry_after` in the body) gives the seconds to wait
 503  No resource currently available
 
 ### Notes
@@ -380,7 +381,7 @@ The gateway does not answer an inbound call while your endpoint decides. The cal
 
 Respond well within the 8-second limit. Exceptions: numbers configured for PIN prompts are answered first so the caller can hear the prompt and enter the PIN (the lookup runs after the PIN is entered; a failed lookup replays the prompt, up to three attempts, then plays a goodbye message instead of a SIP error), and inbound SIP `direct_` numbers do not use this webhook.
 
-The caller also receives SIP `480 Temporarily Unavailable` if the gateway cannot reach Agora's call service, and SIP `503 Service Unavailable` while that service is not accepting new calls.
+The caller also receives SIP `480 Temporarily Unavailable` if the gateway cannot reach Agora's call service, and SIP `503 Service Unavailable` while that service is not accepting new calls. A call over the service's call-rate limit (new calls a second or a minute) is refused with SIP `503 Rate Limited` and a `Retry-After` header before any lookup.
 
 ### Notes
 This webhook allows dynamic call routing to Agora channels. Your DID can be configured to prompt for PIN entry or route directly based on DID/caller ID. Return 404 to reject the call.
