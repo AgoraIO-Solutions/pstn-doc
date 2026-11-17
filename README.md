@@ -333,9 +333,10 @@ The value is sent exactly as supplied, so include the scheme (`Bearer `, `Basic 
   of preference (for example `OPUS`, `PCMU`, `PCMA`, `G722`; `H264`, `VP8`, `AV1`). `video_codecs`
   is empty on the voice entrypoints and when the caller offered no video.
 - `audio_codec`, `video_codec` (strings): the codecs the call will use, empty when none. On the
-  video entrypoints media passes through, so a web client in the channel should publish these:
-  create it with them and it joins with matching codecs at once (see
-  [WEB-CODEC-MATCHING.md](WEB-CODEC-MATCHING.md)).
+  video entrypoints video passes through, so a web client in the channel should publish
+  `video_codec`: create it with that codec and it joins matching at once. For audio the web
+  client stays on Opus whatever `audio_codec` says: Opus passes through and the gateway
+  transcodes anything else (see [WEB-CODEC-MATCHING.md](WEB-CODEC-MATCHING.md)).
 
 ### Success Response Example (from your endpoint)
 *Status Code*: `200 OK`
@@ -1122,7 +1123,7 @@ Your webhook endpoint should:
 Each region has two pairs of ports:
 
 - **Voice (5080, 5081):** audio only. The gateway transcodes the audio between your SIP codec and Agora. A video offer on these ports is answered with audio only.
-- **Video + Voice (5090, 5091):** video calls, and voice-only calls too. Audio and video pass through without transcoding when the Agora side uses the same codecs (see [WEB-CODEC-MATCHING.md](WEB-CODEC-MATCHING.md)).
+- **Video + Voice (5090, 5091):** video calls, and voice-only calls too. Video passes through without transcoding when the Agora side publishes the same codec, and so does Opus audio; G.711 and G.722 audio is transcoded. With several users in the channel the caller hears them mixed and sees them in a grid (see [WEB-CODEC-MATCHING.md](WEB-CODEC-MATCHING.md)).
 
 ### Europe
 **Region**: Europe

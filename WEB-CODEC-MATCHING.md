@@ -1,27 +1,48 @@
 # SIP calls on the video entrypoints: publish the SIP side's codecs from the browser
 
-On the video entrypoints (5090, 5091) the gateway passes video and audio through without
-transcoding, for video calls and voice-only calls alike. This
-keeps quality and latency at their best and uses much less gateway CPU, but it means the browser in the Agora channel must publish the **same codecs the SIP client
-negotiated**. If it publishes something else, the SIP client gets no video from it (and, for
-audio, hears nothing).
+On the video entrypoints (5090, 5091) the gateway passes video through without transcoding, and
+audio too when the SIP client uses Opus, for video calls and voice-only calls alike. This
+keeps quality and latency at their best and uses much less gateway CPU, but it means the browser
+in the Agora channel must publish the **same video codec the SIP client negotiated**, and Opus
+audio (the Web SDK's default). If it publishes another video codec, the SIP client gets no video
+from it. A SIP client that uses G.711 or G.722 is transcoded: it hears any browser, and the
+gateway publishes Opus to the channel.
 
 | Call | What the browser must publish |
 |---|---|
-| Video call on a video entrypoint (5090, 5091; see [SIP Entrypoints](README.md#sipentry)) | the SIP client's video codec (H264, VP8 or AV1) and audio codec (Opus, PCMU, PCMA or G.722) |
-| Voice-only call on a video entrypoint | the SIP client's audio codec |
+| Video call on a video entrypoint (5090, 5091; see [SIP Entrypoints](README.md#sipentry)) | the SIP client's video codec (H264, VP8 or AV1), and Opus audio |
+| Voice-only call on a video entrypoint | Opus audio |
 | Call on a voice entrypoint (5080, 5081) | nothing special: the gateway transcodes the audio and publishes Opus; no video |
 
 The SIP client chooses its codecs. Two ways to match them:
 
 - **Before joining:** your [Inbound Call Lookup](README.md#calllookup) endpoint receives
-  `audio_codec` and `video_codec`, the codecs the call will use. Hand them to the web client and
-  create it with them (`AgoraRTC.createClient({ codec, audioCodec })`): it joins with matching
-  codecs and never switches.
+  `video_codec`, the video codec the call will use. Hand it to the web client and create it with
+  that codec and Opus audio (`AgoraRTC.createClient({ codec, audioCodec: 'opus' })`): it joins
+  with matching codecs and never switches. (`audio_codec` tells you what the SIP client uses;
+  the browser stays on Opus whatever it says.)
 - **After joining:** when the browser is already in the channel, the sample below finds the
   codecs from the first packets it receives and switches to them once.
 
+## More than one web user in the channel
+
+- **Audio:** while two or more users in the channel publish audio, the SIP caller hears all of
+  them mixed. With one, that user's Opus audio passes through again.
+- **Video:** while two or more users publish video, the SIP caller sees them in one picture, a
+  grid of up to 3 x 3 (the first nine by the order they joined), sent at 1280x720. When one is
+  left, that user's video passes through again as sent. The change takes about a second each way.
+  The grid needs an H264 or VP8 call; on an AV1 call the caller keeps seeing one user.
+- **No video:** when nobody in the channel publishes video (nobody has joined yet, or every
+  camera is off), a video caller sees a placeholder animation instead of a frozen or black
+  picture. Audio is not affected.
+
+Each browser should still publish the SIP side's video codec, so that it is seen when it is the
+only one with a camera on.
+
 ## How it works
+
+The gateway now always sends Opus audio, so a browser that stays on Opus only ever switches its
+video codec; the audio half of the steps and of the sample is harmless to keep.
 
 The Agora Web SDK fixes both codecs when the client is created
 (`AgoraRTC.createClient({ codec, audioCodec })`). To change them:
