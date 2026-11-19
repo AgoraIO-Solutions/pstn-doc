@@ -1125,6 +1125,11 @@ Each region has two pairs of ports:
 - **Voice (5080, 5081):** audio only. The gateway transcodes the audio between your SIP codec and Agora. A video offer on these ports is answered with audio only.
 - **Video + Voice (5090, 5091):** video calls, and voice-only calls too. Video passes through without transcoding when the Agora side publishes the same codec, and so does Opus audio; G.711 and G.722 audio is transcoded. With several users in the channel the caller hears them mixed and sees them in a grid (see [WEB-CODEC-MATCHING.md](WEB-CODEC-MATCHING.md)).
 
+These apply to every region below:
+
+- **Media encryption:** SRTP with SDES keys is available on all entrypoints in every region (Europe, USA and Asia). It is optional; we recommend it together with TLS signalling (ports 5081 and 5091), which keeps the SRTP keys in the SDP protected.
+- **Video codecs:** on video entrypoints the gateway passes video and audio through, so the browser must publish the SIP client's codecs: see [Video SIP calls: match the SIP side's codecs](WEB-CODEC-MATCHING.md).
+
 ### Europe
 **Region**: Europe
 
@@ -1182,10 +1187,6 @@ Each region has two pairs of ports:
 **Transport**: TLS
      `sip.as.lb.01.agora.io:5091;transport=tls`
 
-On video entrypoints the gateway passes video and audio through, so the browser must publish the SIP client's codecs: see [Video SIP calls: match the SIP side's codecs](WEB-CODEC-MATCHING.md).
-
-**Media Encryption**: SRTP (SDES) Optional
-**Recommended**: TLS transport for secure signaling
 
 ## Agora Gateway IPs <a name="gatewayips"></a>
 
