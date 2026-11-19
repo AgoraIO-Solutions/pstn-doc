@@ -29,7 +29,7 @@ The SIP client chooses its codecs. Two ways to match them:
 - **Audio:** while two or more users in the channel publish audio, the SIP caller hears all of
   them mixed. With one, that user's Opus audio passes through again.
 - **Video:** while two or more users publish video, the SIP caller sees them in one picture, a
-  grid of up to 3 x 3 (the first nine by the order they joined), sent at 1280x720. When one is
+  grid of up to 3 x 3 (the first nine by the order they joined), sent at 960x540, 15 frames a second (H264 and VP8 calls; an AV1 call shows one user only). When one is
   left, that user's video passes through again as sent. The change takes about a second each way.
   The grid needs an H264 or VP8 call; on an AV1 call the caller keeps seeing one user.
 - **No video:** when nobody in the channel publishes video (nobody has joined yet, or every
