@@ -18,7 +18,7 @@ The gateway POSTs the caller's details to your endpoint:
 }
 ```
 
-The Lambda generates an Agora RTC token (v007, 24h expiry) and a random channel name, and responds:
+The Lambda generates an Agora RTC token (v007: the token is valid for 15 minutes, its privileges for 24 hours) and a random channel name, and responds:
 
 ```json
 {
@@ -47,14 +47,15 @@ See [Inbound Call Lookup](README.md#calllookup) for the full request/response co
 |----------|----------|-------------|
 | `APP_ID` | yes | Agora App ID |
 | `APP_CERTIFICATE` | no | Agora App Certificate. Leave empty if security/tokens are not enabled for the App ID — the App ID is returned as the token. |
-| `USER_UID` | no | Agora uid the gateway joins as. Default `101`. |
-| `AUDIO_SCENARIO` | no | Audio optimization mode. `0` = human conferencing (default), `10` = optimized for talking to AI agents. |
+| `USER_UID` | no | Agora uid the gateway joins as. Default `101`. Keep it a non-zero number (see [`token` and `uid`](README.md#tokenuid)). |
+| `AUDIO_SCENARIO` | no | Audio optimization mode. `0` = human conferencing (default), `10` = optimized for talking to AI agents. Applied on the voice entrypoints only ([SDK settings](README.md#sdk-settings)). |
 | `WEBHOOK_URL` | no | Your endpoint for call lifecycle events (see [Webhook Events](README.md#webhooks)). Returned to the gateway in the lookup response. |
-| `SDK_OPTIONS` | no | JSON string of Agora SDK options, e.g. `{"rtc.client_type":"71"}`. |
+| `SDK_OPTIONS` | no | JSON string of Agora SDK options, e.g. `{"rtc.client_type":"71"}`. Applied on the voice entrypoints only. |
 
 ## Notes
 
+- **Authentication** — the example does not check the lookup's `Authorization` header or a [webhook signature](README.md#signed-webhooks), and answers anyone who calls its URL. Add that check before you expose it publicly: setting an authorization value with Agora does not make this code validate it.
 - **Channel naming** — this example generates a random 10-character channel per call. In production you'll usually derive the channel from the `did`, `pin`, or `callerid` so the caller lands in the channel your app expects.
 - **Rejecting a call** — return HTTP `404` to reject the inbound call.
 - **Response time** — respond within 8 seconds, including any Lambda cold start. A slower lookup fails: see [Call answer timing](README.md#call-answer-timing).
-- **Token expiry** — tokens are generated with a 24-hour lifetime.
+- **Token expiry** — the token must be used to join within 15 minutes (the gateway joins at once); its join and publish privileges last 24 hours.

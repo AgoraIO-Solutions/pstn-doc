@@ -11,6 +11,10 @@ If you only need to connect inbound callers to a regular Agora RTC channel (no A
 The environment variables below can be set in your lambda function to configure the agent behavior per pin.     
 The lambda function URL can then be provided to Agora PSTN admin to be assigned to your inbound phone number.            
 
+The function does not check the lookup's `Authorization` header or a [webhook signature](README.md#signed-webhooks), and its `debug` and `env_debug` request parameters return its settings (secrets partly masked): add a check, and remove or protect those parameters, before you expose the URL publicly.
+
+The function joins the caller with the string uid `user` (and the agent as `agent`). String uids work on the voice entrypoints (5080, 5081): route these numbers there, because on the video entrypoints the gateway replaces a uid that is not a number (see [`token` and `uid`](README.md#tokenuid)) and the token no longer matches.
+
 The lookup must answer within 8 seconds (see [Call answer timing](README.md#call-answer-timing)). This function answers only after it has started the agent, so a slower agent start fails the lookup, even though the agent may join the channel. It also returns no `appid`, so API call control such as [End Call](README.md#endcall) will not find these calls; add `appid` to the response if you need that.
 
 ## Environment Variables
@@ -22,7 +26,7 @@ The function uses PIN-based environment variable lookup. For each variable, it f
 - **`APP_CERTIFICATE`** - Agora App Certificate (can be empty string if security not enabled for the Agora App ID)
 - **`AGENT_AUTH_HEADER`** - Authorization header for Agora API
 - **`DEFAULT_PROMPT_{PIN}`** - System prompt for the AI agent (PIN-specific)
-- **`DEFAULT_GREETING_{PIN}`** - Greeting message (PIN-specific)
+- **`DEFAULT_GREETING_{PIN}`** - Greeting message (PIN-specific). A PIN other than `0000` is accepted only when both `DEFAULT_PROMPT_{PIN}` and `DEFAULT_GREETING_{PIN}` are set; otherwise the function answers `404` and the caller is asked for the PIN again
 - **`LLM_URL`** - LLM API endpoint
 - **`LLM_API_KEY`** - LLM API key
 - **`LLM_MODEL`** - LLM model name
@@ -37,6 +41,10 @@ The function uses PIN-based environment variable lookup. For each variable, it f
 - **`TTS_VOICE_SAMPLE_RATE`** - TTS sample rate (default: "24000")
 - **`DEFAULT_PROMPT`** - Fallback system prompt
 - **`DEFAULT_GREETING`** - Fallback greeting message
+- **`LLM_PARAMS`** - JSON string of the LLM's `params` (the function adds the channel details); default `{"model": LLM_MODEL, "stream": true}`, also used when the JSON does not parse
+- **`GRAPH_ID`** - Agent graph ID, sent as `graph_id` when set
+- **`ASR_LANGUAGE`** - Speech recognition language (default: "en-US")
+- **`ASR_VENDOR`** - Speech recognition vendor (default: "deepgram")
 
 ## Example Environment Variables
 

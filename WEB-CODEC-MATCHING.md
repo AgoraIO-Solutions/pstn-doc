@@ -1,12 +1,12 @@
 # SIP calls on the video entrypoints: publish the SIP side's codecs from the browser
 
 On the video entrypoints (5090, 5091) the gateway passes video through without transcoding, and
-audio too when the SIP client uses Opus, for video calls and voice-only calls alike. This
+audio too when the SIP client uses Opus with 20 ms packets, for video calls and voice-only calls alike. This
 keeps quality and latency at their best and uses much less gateway CPU, but it means the browser
 in the Agora channel must publish the **same video codec the SIP client negotiated**, and Opus
 audio (the Web SDK's default). If it publishes another video codec, the SIP client gets no video
-from it. A SIP client that uses G.711 or G.722 is transcoded: it hears any browser, and the
-gateway publishes Opus to the channel.
+from it. A SIP client that uses G.711, G.722 or Opus with another packet time is transcoded: it
+hears any browser, and the gateway publishes Opus to the channel.
 
 | Call | What the browser must publish |
 |---|---|
