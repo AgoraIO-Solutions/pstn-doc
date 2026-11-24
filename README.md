@@ -233,6 +233,13 @@ Body:
 - `callid` [success only]: This can be used to end the call
 - `reason` [failure only]: Why the call failed, usually one of `busy`, `no_answer`, `unavailable`, `declined`, `forbidden`, `not_found`, `cancelled`, `rejected` or `failed`. When the gateway cannot run the dial command it answers `{"success":false,"response":"..."}` instead, without `reason` or `sip_code`
 - `sip_code` [failure only]: The SIP response code, when one is known (may be empty)
+- `sip_failure` [failure only, optional]: What really happened, for a call that was never answered, e.g.
+  `{"code": 603, "cause": "CALL_REJECTED", "q850": 21, "source": "far_end"}`. `code` is the SIP status (300-699) or
+  `null`; `cause` the hangup cause; `q850` the Q.850 cause (0-127) or `null`; `source` is `far_end` (the called side
+  answered with that code), `local` (the call was ended on our side: no answer in time, or a login challenge with no
+  credentials) or `unknown` (408 and 503 are also reported for no reply, a closed port or a TLS failure). No text from
+  the called side is included. Absent when it is not known; `reason` and `sip_code` keep their meaning either way.
+  Ignore fields you do not know: more may be added
 
 ### Error Code Responses
 401  Unauthorized
@@ -1035,6 +1042,7 @@ Sent when the call ends, but not guaranteed (see [Events](#events)). An outbound
 - `sip_response_code` - SIP response code that ended the call (empty if none)
 - `sip_response_phrase` - SIP response phrase (empty if none)
 - `call_status` - Outcome: `answered`, `busy`, `no_answer`, `unavailable`, `declined`, `forbidden`, `not_found`, `cancelled`, `rejected` or `failed`
+- `sip_failure` (optional, an outbound call that was never answered) - the same object as in the API's failure response
 
 ### Inbound Call Event Sequence
 
