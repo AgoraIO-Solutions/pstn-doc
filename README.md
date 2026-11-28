@@ -13,10 +13,11 @@
 10. [Re-bridge](#rebridge)
 11. [Send DTMF](#senddtmf)
 12. [Transfer (SIP REFER)](#transfer)
-13. [Webhook Events](#webhooks)
-14. [SIP Entrypoints](#sipentry)
-15. [Agora Gateway IPs](#gatewayips)
-16. [Twilio Configuration](#configtwilio)
+13. [Hold Media](#holdmedia)
+14. [Webhook Events](#webhooks)
+15. [SIP Entrypoints](#sipentry)
+16. [Agora Gateway IPs](#gatewayips)
+17. [Twilio Configuration](#configtwilio)
 
 **Example code:** [Inbound Call Lookup Lambda](CALL-LOOKUP-LAMBDA.md) · [PSTN to ConvoAI](convoAI.md) · [Telephony Go SDK](TELEPHONY-GO.md) · [Video SIP calls: match the SIP side's codecs in the browser](WEB-CODEC-MATCHING.md)
 
@@ -107,6 +108,7 @@ In this scenario, the end-user dials a phone number displayed to them and enters
   - "0": Automatic Human Conferencing Scenarios (default)
   - "10": Optimized To Talk to AI Agents
 - `video` (boolean) [optional]: Video is set by the SIP port the call arrives on, not by this flag: have your provider send the call to a video entrypoint (see [SIP Entrypoints](#sipentry)). Default: `false`
+- `hold_media_id` (string) [optional]: your own audio and picture for the SIP caller while nobody else is in the channel, instead of the default music and picture (see [Hold Media](#holdmedia)). It must be one of this `appid`'s, with status `ready`: else this request is refused with `400`
 - `region` (string): the user's region where they will likely be located and calling from. Values:
 
       AREA_CODE_NA: North America
@@ -197,6 +199,7 @@ In this scenario, the end-user receives a phone call which connects them directl
   - "0": Automatic Human Conferencing Scenarios (default)
   - "10": Optimized To Talk to AI Agents
 - `video` (boolean) [optional]: Enable video for this call. When `true`, the gateway uses video-capable SIP ports (H264, VP8 and AV1). Default: `false`
+- `hold_media_id` (string) [optional]: your own audio and picture for the SIP caller while nobody else is in the channel, instead of the default music and picture (see [Hold Media](#holdmedia)). It must be one of this `appid`'s, with status `ready`: else this request is refused with `400`
 - `region` (string): the user's region where they will likely be located and calling from. Values:
 
       AREA_CODE_NA: North America
@@ -280,6 +283,7 @@ In this scenario, an inbound SIP address is requested. When the SIP address is d
   - "0": Automatic Human Conferencing Scenarios (default)
   - "10": Optimized To Talk to AI Agents
 - `video` (boolean) [optional]: Enable video for this call. When `true`, the returned `sip` address uses the video-capable SIP port 5090 (H264, VP8 and AV1). Default: `false`
+- `hold_media_id` (string) [optional]: your own audio and picture for the SIP caller while nobody else is in the channel, instead of the default music and picture (see [Hold Media](#holdmedia)). It must be one of this `appid`'s, with status `ready`: else this request is refused with `400`
 - `region` (string): the user's region where they will likely be located and calling from. Values:
 
       AREA_CODE_NA: North America
@@ -432,6 +436,7 @@ Body:
   out to accept video when the call arrived on a video entrypoint (see [SIP Entrypoints](#sipentry)).
   This applies to calls looked up before they are answered; on a number configured for PIN
   prompts (answered first) it is not applied, and the call goes ahead.
+- `hold_media_id` (string) [optional]: your own audio and picture for the caller while nobody else is in the channel (see [Hold Media](#holdmedia)). One of this `appid`'s with status `ready`, and used only with a `token` made for this `appid` (a project with tokens enabled); otherwise it is ignored and the default plays
 
 ### Error Code Responses
 404  Not Found
@@ -847,6 +852,68 @@ gateway sent the REFER, not that it was accepted or that the new leg was
 answered. The gateway ends its leg once the REFER is sent, so **a refused
 REFER still ends the call**. Either way the call's webhook events finish with
 `agora_bridge_end`, then `call_hangup`.
+
+## Hold Media <a name="holdmedia"></a>
+What a SIP caller hears and sees while nobody else is in the Agora channel: by default music and a ringing
+phone picture. Upload your own audio and/or picture once, then name it on a call with `hold_media_id`
+([Inbound PSTN](#inbound), [Outbound PSTN](#outbound), [Inbound SIP](#inboundsip) or your
+[lookup reply](#calllookup)). It plays from the moment the call joins the channel until the first other user
+joins; a video caller sees the picture whenever no camera is forwarded to it.
+
+Every action is a `POST` of a JSON body to `https://sipcm.agora.io/v1/api/hold_media`, with the same
+`Authorization` header and `appid` as `/v1/api/pstn`. A set belongs to its `appid`: no other `appid` can see,
+use or delete it.
+
+### Upload
+```json
+{
+  "action":"hold_media_upload",
+  "appid":"your_appid_here",
+  "audio":"<base64 of a WAV, MP3, Ogg, FLAC or M4A file>",
+  "image":"<base64 of a PNG or JPEG file>"
+}
+```
+- `audio` (string) [optional]: at most 10 MB. The first 120 seconds are used, played in a loop, at a voice-call
+  level (about -23 LUFS) and 16 kHz. Callers on PSTN and many phones hear only up to 3.4 kHz: speech, piano and
+  guitar come through, bass does not. Use only audio you have the rights to.
+- `image` (string) [optional]: at most 5 MB, fitted into 640x480 (the rest dark). Video callers only.
+- At least one of the two. What you leave out stays the default for calls that name this set.
+
+*Status Code*: `200 OK`
+```json
+{ "hold_media_id":"hm_0f1e2d3c4b5a69788796", "status":"processing", "created":"2026-11-27T19:30:00.000Z" }
+```
+It is prepared within seconds and then copied to every gateway. Name it on calls once its status is `ready`.
+
+### Status, list and delete
+```json
+{ "action":"hold_media_status", "appid":"your_appid_here", "hold_media_id":"hm_0f1e2d3c4b5a69788796" }
+{ "action":"hold_media_list", "appid":"your_appid_here" }
+{ "action":"hold_media_delete", "appid":"your_appid_here", "hold_media_id":"hm_0f1e2d3c4b5a69788796" }
+```
+A status (also each item of `{"items":[...]}` for a list):
+```json
+{
+  "hold_media_id":"hm_0f1e2d3c4b5a69788796",
+  "status":"ready",
+  "created":"2026-11-27T19:30:00.000Z",
+  "audio_seconds":20,
+  "image":"640x480",
+  "gateways":{ "with_it":4, "reporting":4 }
+}
+```
+- `status`: `processing`, `ready` or `failed` (then `error` says why, for example a file that is not audio or
+  a picture). Upload again after a failure.
+- `gateways`: how many of the gateways reporting now have every ready set. A gateway that has not got this
+  one yet plays the default to its calls: no call ever waits for it.
+- Delete answers `{"deleted":true}`; calls that name it afterwards are refused (`400`), or, from a lookup reply,
+  get the default.
+
+### Errors
+- `400` `{"error":"..."}`: a missing or unusable field; `audio`/`image` not base64 or too large
+- `401` as `/v1/api/pstn`; `404` no such `hold_media_id` for this `appid`
+- `409` already 20 sets for this `appid`: delete one first
+- `429` two uploads of this `appid` are still being prepared: try again in a minute
 
 ## Webhook Events <a name="webhooks"></a>
 
